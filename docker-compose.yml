@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    container_name: stonk_train_container
+    command: python3 ./src/main.py
+    volumes:
+      - .:/code

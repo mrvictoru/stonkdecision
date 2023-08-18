@@ -41,6 +41,7 @@ from getstock import *
 
 # Candlestick graph class
 from StockTradingGraph import StockTradingGraph
+import matplotlib.backends.backend_agg as agg
 
 # define the trading environment class
 # This class defines a gym environment for simulating stock trading. The environment takes a pandas DataFrame of stock prices as input, 
@@ -81,9 +82,9 @@ class StockTradingEnv(gym.Env):
     metadata = {'render.modes': ['live', 'file', 'None']}
     visualization = None
 
-    def __init__(self, df, init_balance, max_step, random=True):
+    def __init__(self, render_mode: Optional[str] = None, df, init_balance, max_step, random=True):
         super(StockTradingEnv, self).__init__()
-
+        self.render_mode = render_mode
         # data
         # get all the features from df except for the column 'Volume'
         self.df = df.drop(columns=['Volume'])
@@ -185,7 +186,6 @@ class StockTradingEnv(gym.Env):
             reward_inappropriate = - action_taken[2] * GAMMA
             reward = reward_costbasis + reward_inappropriate
         else:
-
             reward_networth = (self.net_worth - self.net_worths[-2])  * delay_modifier * ALPHA
             reward_balance = (self.balance - self.balance_history[-2]) * delay_modifier * ALPHA
             reward_costbasis = - self.cost_basis * BETA
@@ -193,11 +193,15 @@ class StockTradingEnv(gym.Env):
             reward = reward_networth + reward_balance + reward_costbasis + reward_inappropriate
         
         # if net_worth is below 0, or current_step is greater than max_step, then environment terminates
-        done = self.net_worth < 0 or self.current_step >= self.max_step or self.balance < 0
+        truncated = self.net_worth < 0 or self.current_step >= self.max_step or self.balance < 0
+        terminated = self.net_worth <= 0 or self.balance <= 0
 
-        obs = self._next_observation_norm()
+        obs = self._next_observation()
 
-        return obs, reward, done, {}
+        return obs, reward, terminated, truncated, {}
+    
+    def norm_obs(self):
+        return self._next_observation_norm()
     
     def _take_action(self,action, execute_price):
         # Set the current price to a random price within the time step
@@ -298,21 +302,24 @@ class StockTradingEnv(gym.Env):
         print(self.df.iloc[self.current_step])
     
 
-    def render(self, mode='None', **kwargs):
+    def render(self, **kwargs):
+        mode = kwargs.get('mode', self.render_mode)
+        if self.visualization == None:
+            self.visualization = StockTradingGraph(self.df, self.dfvolume, self.action_history, self.net_worths, windows_size=LOOKBACK_WINDOW_SIZE)
         # Render the environment to the screen
-        if mode == 'print':
+        if mode == 'human':
             self._render_to_print()
         elif mode == 'file':
             self._render_to_file(kwargs.get('filename', 'render.txt'))
-        elif mode == 'plot':
-            if self.visualization == None:
-                self.visualization = StockTradingGraph(self.df, self.dfvolume, self.action_history, self.net_worths, windows_size=LOOKBACK_WINDOW_SIZE)
+        elif mode == 'rgb_array':
             if self.current_step > LOOKBACK_WINDOW_SIZE:
-                return self.visualization.plot(self.current_step), self.current_step
+                fig = self.visualization.plot(self.current_step)
+                canvas = agg.FigureCanvasAgg(fig)
+                canvas.draw()
+                buf = canvas.buffer_rgba()
+                w, h = fig.canvas.get_width_height()
+                return np.frombuffer(buf, dtype=np.uint8).reshape(h, w, 4)
 
-        else:
-            # return the observation
-            return self._next_observation()
         return None, None
 
 

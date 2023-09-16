@@ -82,7 +82,7 @@ class StockTradingEnv(gym.Env):
     metadata = {'render.modes': ['live', 'file', 'None']}
     visualization = None
 
-    def __init__(self, render_mode: Optional[str] = None, df, init_balance, max_step, random=True):
+    def __init__(self, df, init_balance, max_step, render_mode = None, random=True):
         super(StockTradingEnv, self).__init__()
         self.render_mode = render_mode
         # data

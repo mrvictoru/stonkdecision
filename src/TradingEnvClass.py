@@ -318,7 +318,7 @@ class StockTradingEnv(gym.Env):
                 canvas.draw()
                 buf = canvas.buffer_rgba()
                 w, h = fig.canvas.get_width_height()
-                return np.frombuffer(buf, dtype=np.uint8).reshape(h, w, 4)
+                return np.frombuffer(buf, dtype=np.uint8).reshape(h, w, 4), self.current_step
 
         return None, None
 

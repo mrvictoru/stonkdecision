@@ -13,6 +13,6 @@ def save_figures(figures, directory):
     # loop through the items and key value pairs
     for step, figure in figures.items():
         # save the figure to png file
-        figure.savefig(f"{directory}/{step}.png")
+        plt.imsave(f"{directory}/{step}.png", figure)
         # close the figure
         plt.close(figure)

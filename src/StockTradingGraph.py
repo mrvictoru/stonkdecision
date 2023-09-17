@@ -22,7 +22,7 @@ class StockTradingGraph:
         # Save the dataframe with the stock price data (get only open, high, low, close from df)
         self.df = df[['Open', 'High', 'Low', 'Close']]
         # get dfvolume as a column of df
-        self.df['Volume'] = dfvolume
+        self.df.loc[:,'Volume'] = dfvolume
 
         self.net_worth = net_worth_history
         # the first element of the action history is the buy or sell action

@@ -4,7 +4,7 @@ services:
     container_name: stonk_train_container
     command: python3 ./src/main.py
     volumes:
-      - .:/code
+      - stonkapp:/code
     deploy:
       resources:
         reservations:
@@ -12,3 +12,6 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+
+volumes:
+  stonkapp:

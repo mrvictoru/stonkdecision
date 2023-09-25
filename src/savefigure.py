@@ -14,5 +14,5 @@ def save_figures(figures, directory):
     for step, figure in figures.items():
         # save the figure to png file
         plt.imsave(f"{directory}/{step}.png", figure)
-        # close the figure
-        plt.close(figure)
+        plt.close()
+        print(step, "saved")

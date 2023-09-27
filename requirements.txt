@@ -4,6 +4,7 @@ gymnasium
 opencv-python-headless
 stable-baselines3
 yfinance
+imageio
 ta
 datasets
 tqdm

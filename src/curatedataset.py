@@ -38,6 +38,39 @@ def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volum
 
     return env
 
+# second group of functions are to get agent, run it in the environment, collect trading data and save as json dataset
+def run_env(agent, env, num_episodes, save_path, normalize = False):
+    # data dictionary to store data
+    data = {'data':[]}
+    # loop through episodes
+    for i in range (num_episodes):
+        # dictionary to store state, ation, reward, timestep
+        dict = {'state':[], 'action':[], 'reward':[], 'timestep':[]}
+        # reset the environment
+        state = env.reset()
+        
+        dict['state'].append(state.tolist())
+        timestep = 0
+        done = False
+        # loop to sample action, next_state, reward, from the env
+        while not done:
+            # sample action
+            if normalize:
+                norm_state = env.norm_obs()
+            action, _states = agent.predict(state, deterministic=False)
+            try:
+                next_state, reward, terminated, truncated, info = env.step(action)
+            except Exception as e:
+                print(e)
+                print('time step:', timestep)
+                break
+            dict['action'].append(action.tolist())
+            dict['reward'].append(reward)
+            dict['timestep'].append(timestep)
+            dict['state'].append(state.tolist())
+            # update timestep
+            timestep += 1
+
         
 
     

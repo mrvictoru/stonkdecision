@@ -11,6 +11,8 @@ from TradingEnvClass import StockTradingEnv
 
 import numpy as np
 
+import json
+
 # start_date need to be in format of 'YYYY-MM-DD'
 def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volume', 'volume_cmf', 'trend_macd', 'momentum_rsi'], init_balance = 20000, random = False):
     # work out the end_date from start_date and period
@@ -85,4 +87,7 @@ def run_env(agent, env, num_episodes, normalize = False):
     
     return data
 
-    
+def save_data(data, file_name):
+
+    with open(file_name, 'w') as outfile:
+        json.dump(data, outfile)

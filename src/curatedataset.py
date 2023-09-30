@@ -39,7 +39,7 @@ def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volum
     return env
 
 # second group of functions are to get agent, run it in the environment, collect trading data and save as json dataset
-def run_env(agent, env, num_episodes, save_path, normalize = False):
+def run_env(agent, env, num_episodes, normalize = False):
     # data dictionary to store data
     data = {'data':[]}
     # loop through episodes
@@ -48,15 +48,15 @@ def run_env(agent, env, num_episodes, save_path, normalize = False):
         dict = {'state':[], 'action':[], 'reward':[], 'timestep':[]}
         # reset the environment
         state = env.reset()
-        
         dict['state'].append(state.tolist())
         timestep = 0
         done = False
+        # use normalized state if normalize is True
+        if normalize:
+            state = env.norm_obs()
         # loop to sample action, next_state, reward, from the env
         while not done:
             # sample action
-            if normalize:
-                norm_state = env.norm_obs()
             action, _states = agent.predict(state, deterministic=False)
             try:
                 next_state, reward, terminated, truncated, info = env.step(action)
@@ -67,10 +67,22 @@ def run_env(agent, env, num_episodes, save_path, normalize = False):
             dict['action'].append(action.tolist())
             dict['reward'].append(reward)
             dict['timestep'].append(timestep)
-            dict['state'].append(state.tolist())
             # update timestep
             timestep += 1
+            if normalize:
+                next_state = env.norm_obs()
+            state = next_state
 
-        
+            # check if the episode is done
+            if terminated or truncated:
+                done = True
+                print('Episode: ', i, 'Timestep:', timestep,  ' done')
+            else:
+                dict['state'].append(state.tolist())
+
+        # store the data for the episode
+        data['data'].append(dict)
+    
+    return data
 
     

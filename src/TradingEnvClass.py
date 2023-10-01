@@ -27,6 +27,9 @@ GAMMA = 100
 
 LOOKBACK_WINDOW_SIZE = 30
 
+# number of additonal features of the environment
+ADD_FEATURES_NUM = 6
+
 
 # import the necessary packages
 import gymnasium as gym
@@ -110,7 +113,7 @@ class StockTradingEnv(gym.Env):
 
         # observation space (prices and technical indicators)
         # shape should be (n_features + 6) where 6 is the number of additional dynamic features of the environment
-        self.observation_space = spaces.Box(low=0, high=np.inf, shape=(len(self.df.columns) + 6,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=0, high=np.inf, shape=(len(self.df.columns) + ADD_FEATURES_NUM,), dtype=np.float32)
 
     # reset the state of the environment to an initial state
     def reset(self):
@@ -136,7 +139,7 @@ class StockTradingEnv(gym.Env):
         # get the features from the data frame for current time step
         frame = self.df.iloc[self.current_step].values
 
-        # append additional data
+        # append additional features
         obs = np.append(frame, [
             self.balance,
             self.net_worth,
@@ -153,7 +156,7 @@ class StockTradingEnv(gym.Env):
         frame = self.df_standard.iloc[self.current_step].values
 
         # normalize the additional data to avoid gradient issues.
-        # append additional data
+        # # append additional features
         obs = np.append(frame, [
             self.balance/MAX_ACCOUNT_BALANCE,
             self.net_worth/MAX_ACCOUNT_BALANCE,

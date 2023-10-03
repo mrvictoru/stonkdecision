@@ -14,7 +14,7 @@ import numpy as np
 import json
 
 # start_date need to be in format of 'YYYY-MM-DD'
-def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volume', 'volume_cmf', 'trend_macd', 'momentum_rsi'], init_balance = 20000, random = False):
+def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volume', 'volume_cmf', 'trend_macd', 'momentum_rsi', 'momentum_stoch_rsi'], init_balance = 20000, random = False):
     # work out the end_date from start_date and period
     try:
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')

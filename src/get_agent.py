@@ -1,6 +1,6 @@
 # this script is used to create or load agent.
 
-from stable_baselines3 import PPO, PPO2, A2C, DDPG
+from stable_baselines3 import PPO, A2C, DDPG
 import numpy as np
 
 
@@ -12,9 +12,7 @@ class Agent:
         self.action_space = env.action_space
         if agent_type.startswith('stable-baselines'):
             model_type = agent_type.split('-')[1]
-            if model_type == 'ppo2':
-                self.agent = PPO2.load(model_path)
-            elif model_type == 'ppo':
+            if model_type == 'ppo':
                 self.agent = PPO.load(model_path)
             elif model_type == 'a2c':
                 self.agent = A2C.load(model_path)
@@ -42,9 +40,12 @@ class TradingAlgorithm:
         self.indicator_column = indicator_column
         self.bought = False
         self.type = algo_type
+        self.amount_range = amount_range
+
 
     def trade(self, state):
         # check if the algorithm is momentum_stoch_rsi
+
         if self.type == 'momentum_stoch_rsi':
             # load the momentum_stoch_rsi indicator from the observation
             momentum_stoch_rsi = state[self.indicator_column]

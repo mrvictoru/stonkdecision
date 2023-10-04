@@ -37,8 +37,9 @@ def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volum
     # create gym environment
     max_step = len(stock_data) - 1
     env = StockTradingEnv(stock_data, init_balance, max_step, random)
+    env.reset()
 
-    return env
+    return env, env.observation_space.shape[0], env.action_space.shape[0], env.columns
 
 # second group of functions are to get agent, run it in the environment, collect trading data and save as json dataset
 def run_env(agent, env, num_episodes, normalize = False):
@@ -63,6 +64,8 @@ def run_env(agent, env, num_episodes, normalize = False):
             try:
                 next_state, reward, terminated, truncated, info = env.step(action)
             except Exception as e:
+                print('error in step')
+                print(action)
                 print(e)
                 print('time step:', timestep)
                 break

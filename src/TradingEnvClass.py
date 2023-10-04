@@ -96,6 +96,8 @@ class StockTradingEnv(gym.Env):
         self.init_balance = init_balance
         self.max_step = max_step
         self.random = random
+        # turn the columns into a list
+        self.columns = self.df.columns.tolist()
 
         self.net_worths = []
 
@@ -149,6 +151,11 @@ class StockTradingEnv(gym.Env):
             self.total_sales_value,
         ], axis=0)
 
+        # update self.columns to include the additional features if it is not already included
+        # check if the additional features are already included
+        if len(self.columns) != len(obs):
+            self.columns.extend(['Balance', 'Net_worth', 'Shares_held', 'Cost_basis', 'Total_shares_sold', 'Total_sales_value'])
+
         return obs
     
     def _next_observation_norm(self):
@@ -165,6 +172,11 @@ class StockTradingEnv(gym.Env):
             self.total_shares_sold/MAX_NUM_SHARES,
             self.total_sales_value/(MAX_NUM_SHARES *MAX_SHARE_PRICE),
         ], axis=0)
+
+        # update self.columns to include the additional features if it is not already included
+        # check if the additional features are already included
+        if len(self.columns) != len(obs):
+            self.columns.extend(['Balance', 'Net_worth', 'Shares_held', 'Cost_basis', 'Total_shares_sold', 'Total_sales_value'])
 
         return obs
 

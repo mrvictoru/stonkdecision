@@ -65,7 +65,7 @@ def run_env(agent, env, num_episodes, normalize = False):
                 next_state, reward, terminated, truncated, info = env.step(action)
             except Exception as e:
                 print('error in step')
-                print(action)
+                print('action: ', action)
                 print(e)
                 print('time step:', timestep)
                 break

@@ -26,10 +26,10 @@ class Agent:
     def predict(self, state, deterministic=False):
         # if the agent is None, then return a random action
         if self.agent is None:
-            return self.action_space.sample()
+            return self.action_space.sample(), 0
         # if the agent is a TradingAlgorith, then return the action from the algorithm
         elif isinstance(self.agent, TradingAlgorithm):
-            return self.agent.trade(state)
+            return self.agent.trade(state), 0
         # else, return the action from the stable-baselines agent
         else:
             return self.agent.predict(state, deterministic=deterministic)
@@ -55,19 +55,19 @@ class TradingAlgorithm:
                 # Buy the stock if it is oversold
                 self.bought = True
                 # calculate return confidence and action
-                return [oversold_confidence(momentum_stoch_rsi), oversold_action(momentum_stoch_rsi, self.amount_range[0], self.amount_range[1])]
+                return np.array([oversold_confidence(momentum_stoch_rsi), oversold_action(momentum_stoch_rsi, self.amount_range[0], self.amount_range[1])])
                 
             elif momentum_stoch_rsi > 0.8 and self.bought:
                 # Sell the stock if it is overbought
                 self.bought = False
                 # calculate return confidence and action
-                return [overbought_confidence(momentum_stoch_rsi), overbought_action(momentum_stoch_rsi, self.amount_range[0], self.amount_range[1])]
+                return np.array([overbought_confidence(momentum_stoch_rsi), overbought_action(momentum_stoch_rsi, self.amount_range[0], self.amount_range[1])])
 
             else:
                 # Hold the current position
                 self.bought = False
                 # return a random number between 0.2 and -0.2 as the confidence and action
-                return [np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])]
+                return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
 
 # the following helper functions are used to calculate the confidence of the action based on the momentum_stoch_rsi indicator        
 def oversold_confidence(momentum_stoch_rsi):

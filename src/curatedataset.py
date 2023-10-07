@@ -24,6 +24,10 @@ def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volum
         raise ValueError("Incorrect data format, should be YYYY-MM-DD")
         
     stock_data = get_stock_data_yf_between_with_indicators(stock_name, start_date, end_date, interval, indicators)
+    # check if momentum_stoch_rsi is in the indicators
+    if 'momentum_stoch_rsi' in indicators:
+        # if so then change the first 10 rows of momentum_stoch_rsi to 0.5
+        stock_data['momentum_stoch_rsi'].iloc[:10] = 0.5
 
     # loop through the data and check for any NaN values or inf values
     infnancheck = False
@@ -39,7 +43,7 @@ def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volum
     env = StockTradingEnv(stock_data, init_balance, max_step, random)
     env.reset()
 
-    return env, env.observation_space.shape[0], env.action_space.shape[0], env.columns
+    return env, env.observation_space.shape[0], env.action_space.shape[0], env.columns, stock_data
 
 # second group of functions are to get agent, run it in the environment, collect trading data and save as json dataset
 def run_env(agent, env, num_episodes, normalize = False):

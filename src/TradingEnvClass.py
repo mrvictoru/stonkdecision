@@ -85,7 +85,7 @@ class StockTradingEnv(gym.Env):
     metadata = {'render.modes': ['live', 'file', 'None']}
     visualization = None
 
-    def __init__(self, df, init_balance, max_step, render_mode = None, random=True):
+    def __init__(self, df, init_balance, max_step, render_mode = None, random=False):
         super(StockTradingEnv, self).__init__()
         self.render_mode = render_mode
         # data
@@ -98,6 +98,7 @@ class StockTradingEnv(gym.Env):
         self.random = random
         # turn the columns into a list
         self.columns = self.df.columns.tolist()
+        print("init env with max step: ", self.max_step)
 
         self.net_worths = []
 
@@ -208,10 +209,19 @@ class StockTradingEnv(gym.Env):
             reward = reward_networth + reward_balance + reward_costbasis + reward_inappropriate
         
         # if net_worth is below 0, or current_step is greater than max_step, then environment terminates
-        truncated = self.net_worth < 0 or self.current_step >= self.max_step or self.balance < 0
+        truncated = self.current_step >= self.max_step
         terminated = self.net_worth <= 0 or self.balance <= 0
 
         obs = self._next_observation()
+        # checking
+        if truncated:
+            print("step check truncated: ", truncated)
+            print("step check max step: ", self.max_step)
+            print("step check current step: ", self.current_step)
+        if terminated:
+            print("step check terminated: ", terminated)
+            print("step check net worth: ", self.net_worth)
+            print("step check balance: ", self.balance)
 
         return obs, reward, terminated, truncated, {}
     

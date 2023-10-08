@@ -14,7 +14,7 @@ import numpy as np
 import json
 
 # start_date need to be in format of 'YYYY-MM-DD'
-def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volume', 'volume_cmf', 'trend_macd', 'momentum_rsi', 'momentum_stoch_rsi'], init_balance = 20000, random = False):
+def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volume', 'volume_cmf', 'trend_macd', 'momentum_rsi', 'momentum_stoch_rsi'], init_balance = 20000, render = 'None', random = False):
     # work out the end_date from start_date and period
     try:
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
@@ -40,7 +40,7 @@ def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volum
     
     # create gym environment
     max_step = len(stock_data) - 1
-    env = StockTradingEnv(stock_data, init_balance, max_step, random)
+    env = StockTradingEnv(stock_data, init_balance, max_step, render_mode=render, random=random)
     env.reset()
 
     return env, env.observation_space.shape[0], env.action_space.shape[0], env.columns, stock_data
@@ -84,6 +84,8 @@ def run_env(agent, env, num_episodes, normalize = False):
 
             # check if the episode is done
             if terminated or truncated:
+                print('Terminated: ', terminated, '; Truncated: ', truncated)
+                print('env current step ', env.current_step, ' env max step ', env.max_step)
                 done = True
                 print('Episode: ', i, 'Timestep:', timestep,  ' done')
             else:

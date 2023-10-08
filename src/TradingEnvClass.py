@@ -213,15 +213,6 @@ class StockTradingEnv(gym.Env):
         terminated = self.net_worth <= 0 or self.balance <= 0
 
         obs = self._next_observation()
-        # checking
-        if truncated:
-            print("step check truncated: ", truncated)
-            print("step check max step: ", self.max_step)
-            print("step check current step: ", self.current_step)
-        if terminated:
-            print("step check terminated: ", terminated)
-            print("step check net worth: ", self.net_worth)
-            print("step check balance: ", self.balance)
 
         return obs, reward, terminated, truncated, {}
     

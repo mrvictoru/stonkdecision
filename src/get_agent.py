@@ -39,20 +39,24 @@ class TradingAlgorithm:
     def __init__(self, algo_type = 'momentum_stoch_rsi', indicator_column = -1, amount_range = [0.2, 0.5]):
         self.indicator_column = indicator_column
         self.bought = False
+        self.memory1 = []
         self.type = algo_type
         self.amount_range = amount_range
-
+    
+    def reset(self):
+        self.bought = False
+        self.memory1 = []
 
     def trade(self, state):
         # check if the algorithm is momentum_stoch_rsi
-
+        # if so implement trading using momentum_stoch_rsi indicator
         if self.type == 'momentum_stoch_rsi':
             # load the momentum_stoch_rsi indicator from the observation
             momentum_stoch_rsi = state[self.indicator_column]
 
             # Determine the current position based on the momentum_stoch_rsi indicator
             if momentum_stoch_rsi < 0.2 and not self.bought:
-                # Buy the stock if it is oversold
+                # Buy the stock if it is oversold 
                 self.bought = True
                 # calculate return confidence and action
                 return np.array([oversold_confidence(momentum_stoch_rsi), oversold_action(momentum_stoch_rsi, self.amount_range[0], self.amount_range[1])])
@@ -68,6 +72,43 @@ class TradingAlgorithm:
                 self.bought = False
                 # return a random number between 0.2 and -0.2 as the confidence and action
                 return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
+            
+        elif self.type == 'trend_sma_fast':
+            # load the trend_sma_fast indicator from the observation
+            trend_sma_fast = state[self.indicator_column]
+            # calculate the ratio of trend_sma_fast to the current close price
+            ratio = trend_sma_fast / state['Close']
+            # add the current ratio to the memory
+            self.memory1.append(ratio)
+
+            # check if we have enough data points in memory
+            if len(self.memory1) >= self.window_size:
+                # calculate the mean and std of ratio over the window_size
+                mean = np.mean(self.memory1)
+                std = np.std(self.memory1)
+
+                # Determine the current position based on the mean and std of ratio
+                if ratio < mean - self.std_threshold * std and not self.bought:
+                    # Buy the stock if the ratio is below the mean - std_threshold * std
+                    self.bought = True
+                    # calculate return confidence and action
+                    return np.array([])
+                    
+                elif ratio > mean + self.std_threshold * std and self.bought:
+                    # Sell the stock if the ratio is above the mean + std_threshold * std
+                    self.bought = False
+                    # calculate return confidence and action
+                    return np.array([])
+
+            # Hold the current position
+            self.bought = False
+            # return a random number between 0.2 and -0.2 as the confidence and action
+            return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
+
+
+
+
+
 
 # the following helper functions are used to calculate the confidence of the action based on the momentum_stoch_rsi indicator        
 def oversold_confidence(momentum_stoch_rsi):

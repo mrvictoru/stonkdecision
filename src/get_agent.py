@@ -88,14 +88,14 @@ class TradingAlgorithm:
                 std = np.std(self.memory1)
 
                 # Determine the current position based on the mean and std of ratio
-                if ratio < mean - self.std_threshold * std and not self.bought:
-                    # Buy the stock if the ratio is below the mean - std_threshold * std
+                if ratio < mean - std and not self.bought:
+                    # Buy the stock if the ratio is below the mean - std
                     self.bought = True
                     # calculate return confidence and action
                     return np.array([])
                     
-                elif ratio > mean + self.std_threshold * std and self.bought:
-                    # Sell the stock if the ratio is above the mean + std_threshold * std
+                elif ratio > mean + std and self.bought:
+                    # Sell the stock if the ratio is above the mean + std
                     self.bought = False
                     # calculate return confidence and action
                     return np.array([])
@@ -104,9 +104,6 @@ class TradingAlgorithm:
             self.bought = False
             # return a random number between 0.2 and -0.2 as the confidence and action
             return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
-
-
-
 
 
 
@@ -130,3 +127,19 @@ def overbought_action(momentum_stoch_rsi, lower_bound, higher_bound):
     # map momentum_stoch_rsi [1 : 0.8] to [higher_bound : lower_bound]
     action = (momentum_stoch_rsi - 1) * (lower_bound - higher_bound) / (0.8 - 1) + higher_bound
     return action
+
+def buy_trend_sma_fast_confidence(ratio, mean, std):
+    # map ratio below the mean - 2*std to 1
+    if ratio <= mean - 2*std:
+        confidence = 1
+    # map ratio between mean - 2*std and mean - std to [0.7 : 1)
+    elif ratio <= mean - std:
+        confidence = (ratio - (mean - 2*std)) / (mean - std - (mean - 2*std)) * (1 - 0.7) + 0.7
+    # map ratio above the mean to 0.7
+    else:
+        confidence = 0.7
+    return confidence
+
+def sell_trend_sma_fast_confidence(ratio, mean, std):
+    # map ratio above the mean + std to [-0.7 : -1]
+    confidence = (ratio - (mean + std)) * (-1 - (-0.7)) / (1 - (mean + std)) + (-0.7)

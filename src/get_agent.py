@@ -132,14 +132,22 @@ def buy_trend_sma_fast_confidence(ratio, mean, std):
     # map ratio below the mean - 2*std to 1
     if ratio <= mean - 2*std:
         confidence = 1
-    # map ratio between mean - 2*std and mean - std to [0.7 : 1)
+    # map ratio between mean - 2*std and mean - std to [1:0.7]
     elif ratio <= mean - std:
-        confidence = (ratio - (mean - 2*std)) / (mean - std - (mean - 2*std)) * (1 - 0.7) + 0.7
+        confidence = (ratio - (mean - 2*std)) * (1 - 0.7) / (mean - std - (mean - 2*std)) + 0.7
     # map ratio above the mean to 0.7
     else:
         confidence = 0.7
     return confidence
 
 def sell_trend_sma_fast_confidence(ratio, mean, std):
-    # map ratio above the mean + std to [-0.7 : -1]
-    confidence = (ratio - (mean + std)) * (-1 - (-0.7)) / (1 - (mean + std)) + (-0.7)
+    # map ratio below the mean + 2*std to -1
+    if ratio >= mean + 2*std:
+        confidence = -1
+    # map ratio between mean + 2*std and mean + std to [-1:-0.7]
+    elif ratio <= mean + std:
+        confidence = (ratio - (mean + std)) * (-1 + 0.7) / (mean + 2*std - (mean - std)) - 0.7
+    # map ratio above the mean to 0.7
+    else:
+        confidence = -0.7
+    return confidence

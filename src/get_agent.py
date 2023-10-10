@@ -46,7 +46,7 @@ class TradingAlgorithm:
     def reset(self):
         self.bought = False
         self.memory1 = []
-
+    
     def trade(self, state):
         # check if the algorithm is momentum_stoch_rsi
         # if so implement trading using momentum_stoch_rsi indicator
@@ -59,13 +59,15 @@ class TradingAlgorithm:
                 # Buy the stock if it is oversold 
                 self.bought = True
                 # calculate return confidence and action
-                return np.array([oversold_confidence(momentum_stoch_rsi), oversold_action(momentum_stoch_rsi, self.amount_range[0], self.amount_range[1])])
+                confidence = oversold_confidence(momentum_stoch_rsi)
+                return np.array([confidence, buy_action(confidence, self.amount_range[0], self.amount_range[1])])
                 
             elif momentum_stoch_rsi > 0.8 and self.bought:
                 # Sell the stock if it is overbought
                 self.bought = False
                 # calculate return confidence and action
-                return np.array([overbought_confidence(momentum_stoch_rsi), overbought_action(momentum_stoch_rsi, self.amount_range[0], self.amount_range[1])])
+                confidence = overbought_confidence(momentum_stoch_rsi)
+                return np.array([confidence, sell_action(confidence, self.amount_range[0], self.amount_range[1])])
 
             else:
                 # Hold the current position
@@ -92,13 +94,14 @@ class TradingAlgorithm:
                     # Buy the stock if the ratio is below the mean - std
                     self.bought = True
                     # calculate return confidence and action
-                    return np.array([])
+                    confidence = buy_trend_sma_fast_confidence(ratio, mean, std)
+                    return np.array([confidence, buy_action(confidence, self.amount_range[0], self.amount_range[1])])
                     
                 elif ratio > mean + std and self.bought:
                     # Sell the stock if the ratio is above the mean + std
                     self.bought = False
                     # calculate return confidence and action
-                    return np.array([])
+                    return np.array([confidence, sell_action(confidence, self.amount_range[0], self.amount_range[1])])
 
             # Hold the current position
             self.bought = False
@@ -113,20 +116,10 @@ def oversold_confidence(momentum_stoch_rsi):
     confidence = (momentum_stoch_rsi - 0) * (0.7 - 1) / (0.2 - 0) + 1
     return confidence
 
-def oversold_action(momentum_stoch_rsi, lower_bound, higher_bound):
-    # map momentum_stoch_rsi [0 : 0.2] to [higher_bound : lower_bound]
-    action = (momentum_stoch_rsi - 0) * (lower_bound - higher_bound) / (0.2 - 0) + higher_bound
-    return action
-
 def overbought_confidence(momentum_stoch_rsi):
     # map momentum_stoch_rsi [0.8 : 1] to [-0.7 : -1]
     confidence = (momentum_stoch_rsi - 0.8) * (-1 - (-0.7)) / (1 - 0.8) + (-0.7)
     return confidence
-
-def overbought_action(momentum_stoch_rsi, lower_bound, higher_bound):
-    # map momentum_stoch_rsi [1 : 0.8] to [higher_bound : lower_bound]
-    action = (momentum_stoch_rsi - 1) * (lower_bound - higher_bound) / (0.8 - 1) + higher_bound
-    return action
 
 def buy_trend_sma_fast_confidence(ratio, mean, std):
     # map ratio below the mean - 2*std to 1
@@ -151,3 +144,13 @@ def sell_trend_sma_fast_confidence(ratio, mean, std):
     else:
         confidence = -0.7
     return confidence
+
+def buy_action(confidence, lower_bound, higher_bound):
+    # map confidence [1 : 0.7] to [higher_bound : lower_bound]
+    action = (confidence - 1) * (lower_bound - higher_bound) / (0.7 - 1) + higher_bound
+    return action
+
+def sell_action(confidence, lower_bound, higher_bound):
+    # map momentum_stoch_rsi [-1 : -0.7] to [higher_bound : lower_bound]
+    action = (confidence - (-1)) * (lower_bound - higher_bound) / ((-0.7) - (-1)) + higher_bound
+    return action

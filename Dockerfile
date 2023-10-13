@@ -2,6 +2,8 @@ FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
 
 WORKDIR /code
 
+COPY ./src ./src
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
@@ -9,7 +11,8 @@ RUN apt-get update && apt-get install -y \
     python3.10 \
     python3-pip \
     python3-dev \
-    libglib2.0-0
+    libglib2.0-0 \
+    tini
 
 COPY ./requirements.txt ./
 
@@ -19,6 +22,8 @@ RUN pip install --no-cache-dir -r torch_req.txt
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./src ./src
+RUN chmod +x /usr/bin/tini
 
-CMD ["python", "./src/main.py"]
+ENTRYPOINT ["/usr/bin/tini", "--"]
+
+CMD ["jupyter", "notebook", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root"]

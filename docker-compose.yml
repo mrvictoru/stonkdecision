@@ -2,9 +2,12 @@ services:
   app:
     build: .
     container_name: stonk_train_container
-    command: python3 ./src/main.py
+    working_dir: /code/src
+    command: ["jupyter", "notebook", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root"]
     volumes:
       - stonkapp:/code
+    ports:
+      - "8888:8888"
     deploy:
       resources:
         reservations:

@@ -56,7 +56,7 @@ def evaluate_stable_agent(model, env, n_eval_ep = 10):
     print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
     return mean_reward, std_reward
 
-def train_stable_agent(model, env, num_timesteps = 10000):
+def train_stable_agent(model, num_timesteps = 10000):
     # train the agent
     print("Training model: ", model)
     model.learn(total_timesteps=num_timesteps)

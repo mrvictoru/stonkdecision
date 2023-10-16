@@ -42,3 +42,29 @@ def make_dummy_env(stock_name, start_date, num_days, interval, num_cpu):
     env_stable_dum = DummyVecEnv([lambda: env])
     return env_stable, env_stable_dum
 
+def create_stable_agents(env_stable, env_stable_dum):
+    modelPPO = PPO("MlpPolicy", env_stable, verbose=1)
+    modelA2C = A2C("MlpPolicy", env_stable, verbose=1)
+    # there seems to be a problem with this model (DDPG)
+    modelDDPG = DDPG("MlpPolicy", env_stable_dum, verbose=1)
+    # store the models' name in a list
+    return [modelPPO, modelA2C, modelDDPG]
+
+def evaluate_stable_agent(model, env, n_eval_ep = 10):
+    # evaluate the agent
+    mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=n_eval_ep)
+    print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
+    return mean_reward, std_reward
+
+def train_stable_agent(model, env, num_timesteps = 10000):
+    # train the agent
+    print("Training model: ", model)
+    model.learn(total_timesteps=num_timesteps)
+    print("Training complete")
+    return model
+
+def output_stable_agent(model, path):
+    # save the model
+    model.save(path)
+    print("Model saved")
+

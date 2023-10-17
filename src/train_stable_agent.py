@@ -3,6 +3,7 @@
 import torch
 # set detect anomaly to true
 torch.autograd.set_detect_anomaly(True)
+import numpy
 
 from stable_baselines3 import PPO
 from stable_baselines3 import A2C

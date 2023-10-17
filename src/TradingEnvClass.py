@@ -116,10 +116,10 @@ class StockTradingEnv(gym.Env):
 
         # observation space (prices and technical indicators)
         # shape should be (n_features + 6) where 6 is the number of additional dynamic features of the environment
-        self.observation_space = spaces.Box(low=0, high=np.inf, shape=(len(self.df.columns) + ADD_FEATURES_NUM,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(len(self.df.columns) + ADD_FEATURES_NUM,), dtype=np.float32)
 
     # reset the state of the environment to an initial state
-    def reset(self):
+    def reset(self, seed = None):
         self.balance = self.init_balance
         self.net_worth = self.init_balance
         self.max_net_worth = self.init_balance
@@ -133,10 +133,12 @@ class StockTradingEnv(gym.Env):
         
         if self.random:
             # set the current step to a random point within the data frame
+            if seed is not None:
+                np.random.seed(seed)
             self.current_step = np.random.randint(0, len(self.df.loc[:, 'Open'].values) - 6)
         else:
             self.current_step = 0
-        return self._next_observation()
+        return self._next_observation(), {}
 
     def _next_observation(self):
         # get the features from the data frame for current time step
@@ -157,7 +159,7 @@ class StockTradingEnv(gym.Env):
         if len(self.columns) != len(obs):
             self.columns.extend(['Balance', 'Net_worth', 'Shares_held', 'Cost_basis', 'Total_shares_sold', 'Total_sales_value'])
 
-        return obs
+        return obs.astype(np.float32)
     
     def _next_observation_norm(self):
         # get the features from the data frame for current time step
@@ -179,7 +181,7 @@ class StockTradingEnv(gym.Env):
         if len(self.columns) != len(obs):
             self.columns.extend(['Balance', 'Net_worth', 'Shares_held', 'Cost_basis', 'Total_shares_sold', 'Total_sales_value'])
 
-        return obs
+        return obs.astype(np.float32)
 
     def step(self,action):
         

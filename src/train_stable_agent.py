@@ -10,6 +10,7 @@ from stable_baselines3 import DDPG
 
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3.common.monitor import Monitor
 
 # import custom functions and classes
 from curatedataset import makegymenv
@@ -36,10 +37,10 @@ class CustomSubprocVecEnv(SubprocVecEnv):
         # return the observation
         return obs_list
 
-def make_dummy_env(stock_name, start_date, num_days, interval, num_cpu):
+def make_dummy_env(stock_name, start_date, num_days, interval, init_balance, num_cpu):
     env, obs_space_shape, act_space_shape, obs_features, data = makegymenv(stock_name, start_date, num_days, interval)
-    env_stable = CustomSubprocVecEnv([lambda: env for i in range(num_cpu)])
-    env_stable_dum = DummyVecEnv([lambda: env])
+    env_stable = CustomSubprocVecEnv([lambda: StockTradingEnv(data, init_balance, len(data)-1, random = False) for i in range(num_cpu)])
+    env_stable_dum = DummyVecEnv([lambda: StockTradingEnv(data, init_balance, len(data)-1, random = False)])
     return env_stable, env_stable_dum
 
 def create_stable_agents(env_stable, env_stable_dum):
@@ -52,7 +53,8 @@ def create_stable_agents(env_stable, env_stable_dum):
 
 def evaluate_stable_agent(model, env, n_eval_ep = 10):
     # evaluate the agent
-    mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=n_eval_ep)
+    print("Evaluating model: ", model)
+    mean_reward, std_reward = evaluate_policy(model, Monitor(env), n_eval_episodes=n_eval_ep)
     print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
     return mean_reward, std_reward
 

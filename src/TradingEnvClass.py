@@ -85,9 +85,11 @@ class StockTradingEnv(gym.Env):
     metadata = {'render.modes': ['live', 'file', 'None']}
     visualization = None
 
-    def __init__(self, df, init_balance, max_step, render_mode = None, random=False):
+    # add another parameter normalize to determine whether to normalize the observation when return
+    def __init__(self, df, init_balance, max_step, render_mode = None, random=False, normalize=False):
         super(StockTradingEnv, self).__init__()
         self.render_mode = render_mode
+        self.normalize = normalize
         # data
         # get all the features from df except for the column 'Volume'
         self.df = df.drop(columns=['Volume'])
@@ -138,7 +140,11 @@ class StockTradingEnv(gym.Env):
             self.current_step = np.random.randint(0, len(self.df.loc[:, 'Open'].values) - 6)
         else:
             self.current_step = 0
-        return self._next_observation(), {}
+        
+        if self.normalize:
+            return self._next_observation_norm()
+        else:
+            return self._next_observation(), {}
 
     def _next_observation(self):
         # get the features from the data frame for current time step
@@ -214,7 +220,10 @@ class StockTradingEnv(gym.Env):
         truncated = self.current_step >= self.max_step
         terminated = self.net_worth <= 0 or self.balance <= 0
 
-        obs = self._next_observation()
+        if self.normalize:
+            obs = self._next_observation_norm()
+        else: 
+            obs = self._next_observation()
 
         return obs, reward, terminated, truncated, {}
     

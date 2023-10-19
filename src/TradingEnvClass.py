@@ -217,8 +217,8 @@ class StockTradingEnv(gym.Env):
             reward = reward_networth + reward_balance + reward_costbasis + reward_inappropriate
         
         # if net_worth is below 0, or current_step is greater than max_step, then environment terminates
-        truncated = self.current_step >= self.max_step
-        terminated = self.net_worth <= 0 or self.balance <= 0
+        truncated = (self.current_step >= self.max_step)
+        terminated = (self.net_worth <= 0 or self.balance <= 0)
 
         if self.normalize:
             obs = self._next_observation_norm()

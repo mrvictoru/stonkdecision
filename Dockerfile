@@ -2,8 +2,6 @@ FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
 
 WORKDIR /code
 
-COPY ./src ./src
-
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
@@ -23,6 +21,8 @@ RUN pip install --no-cache-dir -r torch_req.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 RUN chmod +x /usr/bin/tini
+
+COPY ./src ./src
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 

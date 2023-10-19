@@ -17,38 +17,15 @@ from stable_baselines3.common.monitor import Monitor
 from curatedataset import makegymenv
 from TradingEnvClass import StockTradingEnv
 
-# create a custom SubprocVecEnv class to allow rendering of the environment according to the custom render function
-class CustomSubprocVecEnv(SubprocVecEnv):
-    def __init__(self, env_fns):
-        super().__init__(env_fns)
-        self.current_env = 0 # index of the current environment to render
-
-    def render(self, mode=None):
-        # create an empty numpy array to store the rendered observations
-        obs_list = []
-        # loop through all the remote objects
-        for remote in self.remotes:
-            # send a render command with the print argument to the remote object
-            remote.send(('render', mode))
-            # receive the rendered observation
-            obs = remote.recv()
-
-            # append the observation to the list
-            obs_list.append(obs)
-        # return the observation
-        return obs_list
-
-def make_dummy_env(stock_name, start_date, num_days, interval, init_balance, num_cpu):
-    env, obs_space_shape, act_space_shape, obs_features, data = makegymenv(stock_name, start_date, num_days, interval)
-    env_stable = CustomSubprocVecEnv([lambda: StockTradingEnv(data, init_balance, len(data)-1, random = False) for i in range(num_cpu)])
-    env_stable_dum = DummyVecEnv([lambda: StockTradingEnv(data, init_balance, len(data)-1, random = False)])
-    return env_stable, env_stable_dum
-
-def create_stable_agents(env_stable, env_stable_dum):
-    modelPPO = PPO("MlpPolicy", env_stable, verbose=1)
-    modelA2C = A2C("MlpPolicy", env_stable, verbose=1)
-    # there seems to be a problem with this model (DDPG)
-    modelDDPG = DDPG("MlpPolicy", env_stable_dum, verbose=1)
+def create_stable_agents(env, num_cpu = 6):
+    print("Vectorizing environment")
+    env_vec = SubprocVecEnv([lambda: env for i in range(num_cpu)])
+    print("Creating PPO agent")
+    modelPPO = PPO("MlpPolicy", env_vec, verbose=1)
+    print("Creating A2C agent")
+    modelA2C = A2C("MlpPolicy", env_vec, verbose=1)
+    print("Creating DDPG agent")
+    modelDDPG = DDPG("MlpPolicy", env, verbose=1)
     # store the models' name in a list
     return [modelPPO, modelA2C, modelDDPG]
 
@@ -70,4 +47,6 @@ def output_stable_agent(model, path):
     # save the model
     model.save(path)
     print("Model saved")
+
+
 

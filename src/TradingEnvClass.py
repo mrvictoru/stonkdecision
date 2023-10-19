@@ -142,7 +142,7 @@ class StockTradingEnv(gym.Env):
             self.current_step = 0
         
         if self.normalize:
-            return self._next_observation_norm()
+            return self._next_observation_norm(), {}
         else:
             return self._next_observation(), {}
 

@@ -3,6 +3,7 @@
 import torch
 # set detect anomaly to true
 torch.autograd.set_detect_anomaly(True)
+import numpy
 
 from stable_baselines3 import PPO
 from stable_baselines3 import A2C
@@ -51,10 +52,10 @@ def create_stable_agents(env_stable, env_stable_dum):
     # store the models' name in a list
     return [modelPPO, modelA2C, modelDDPG]
 
-def evaluate_stable_agent(model, env, n_eval_ep = 10):
+def evaluate_stable_agent(model, env, n_eval_ep = 10, deterministic=False):
     # evaluate the agent
     print("Evaluating model: ", model)
-    mean_reward, std_reward = evaluate_policy(model, Monitor(env), n_eval_episodes=n_eval_ep)
+    mean_reward, std_reward = evaluate_policy(model, Monitor(env), n_eval_episodes=n_eval_ep, deterministic=deterministic)
     print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
     return mean_reward, std_reward
 

@@ -1,0 +1,8 @@
+{
+    "stock_name": "TSLA",
+    "start_date": "2018-01-01",
+    "num_days": 1400,
+    "interval": "1d",
+    "init_balance": 20000,
+    "output_path": "trained_stable_agents/"
+}

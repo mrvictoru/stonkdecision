@@ -13,9 +13,16 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 
+from stable_baselines3.common.env_checker import check_env
+
 # import custom functions and classes
 from curatedataset import makegymenv
 from TradingEnvClass import StockTradingEnv
+
+import argparse
+import json
+import re
+import os
 
 def create_stable_agents(env, num_cpu = 6):
     print("Vectorizing environment")
@@ -47,6 +54,59 @@ def output_stable_agent(model, path):
     # save the model
     model.save(path)
     print("Model saved")
+
+# write a main function that will take a json file with stock_name, start_date, num_days, interval, init_balance as arguments
+# it will train the agent and save it in a folder with the stock_name
+def main():
+    # create an ArgumentParser object
+    parser = argparse.ArgumentParser(description='Train and save a stable agent for stock trading')
+
+    # add an argument for the file path
+    parser.add_argument('file_path', type=str, help='path to the JSON file with stock_name, start_date, num_days, interval, init_balance, output_path')
+
+    # parse the command-line arguments
+    args = parser.parse_args()
+
+    # read the JSON file
+    with open(args.file_path, 'r') as f:
+        config = json.load(f)
+
+    # extract the configuration parameters
+    stock_name = config['stock_name']
+    start_date = config['start_date']
+    num_days = config['num_days']
+    interval = config['interval']
+    init_balance = config['init_balance']
+    output_path = config['output_path']
+    
+    # create the trading environment
+    stable_env, obs_space, act_space, col, data = makegymenv(stock_name, start_date, num_days, interval, normalize=True, init_balance=init_balance)
+
+    try:
+        check_env(stable_env)
+    except Exception as e:
+        print("Failed stable_baselines3 checking")
+        print(e)
+        return None
+    
+    model_list = create_stable_agents(stable_env)
+
+    print("Evaluate pre training model")
+    for model in model_list:
+        _,_ = evaluate_stable_agent(model, stable_env, 5)
+    
+    for model in model_list:
+        trained_model = train_stable_agent(model, len(data)*200)
+        _,_ = evaluate_stable_agent(trained_model, stable_env, 5)
+        match = re.search(r"\.(\w+)\.", str(model))
+        if match:
+            name = match.group(1)
+        # join path and name
+        path = os.path.join(output_path, name)
+        output_stable_agent(trained_model,path)
+
+if __name__ == "__main__":
+    main()
 
 
 

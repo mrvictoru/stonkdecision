@@ -76,11 +76,6 @@ def run_env(agent, env, num_episodes, normalize = False):
             dict['action'].append(action.tolist())
             dict['reward'].append(reward)
             dict['timestep'].append(timestep)
-            # update timestep
-            timestep += 1
-            if normalize:
-                next_state = env.norm_obs()
-            state = next_state
 
             # check if the episode is done
             if terminated or truncated:
@@ -89,7 +84,13 @@ def run_env(agent, env, num_episodes, normalize = False):
                 done = True
                 print('Episode: ', i, 'Timestep:', timestep,  ' done')
             else:
-                dict['state'].append(state.tolist())
+                dict['state'].append(next_state.tolist())
+
+            # update timestep and the state (use normalized state if normalize is True)
+            timestep += 1
+            if normalize:
+                next_state = env.norm_obs()
+            state = next_state
 
         # store the data for the episode
         data['data'].append(dict)

@@ -10,14 +10,15 @@ class Agent:
         self.env = env
         self.observation_space = env.observation_space
         self.action_space = env.action_space
+        self.agent = None
         if agent_type.startswith('stable-baselines'):
             model_type = agent_type.split('-')[1]
             if model_type == 'ppo':
-                self.agent = PPO.load(model_path)
+                self.agent = PPO.load(model_path, env=env)
             elif model_type == 'a2c':
-                self.agent = A2C.load(model_path)
+                self.agent = A2C.load(model_path, env=env)
             elif model_type == 'ddpg':
-                self.agent = DDPG.load(model_path)
+                self.agent = DDPG.load(model_path, env=env)
         elif agent_type == 'algo':
             self.agent = algo
         elif agent_type == 'random':

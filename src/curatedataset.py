@@ -54,7 +54,7 @@ def run_env(agent, env, num_episodes, normalize = False):
         # dictionary to store state, ation, reward, timestep
         dict = {'state':[], 'action':[], 'reward':[], 'timestep':[]}
         # reset the environment
-        state = env.reset()
+        state = env.reset()[0]
         dict['state'].append(state.tolist())
         timestep = 0
         done = False

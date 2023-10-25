@@ -57,18 +57,9 @@ def output_stable_agent(model, path):
 
 # write a main function that will take a json file with stock_name, start_date, num_days, interval, init_balance as arguments
 # it will train the agent and save it in a folder with the stock_name
-def main():
-    # create an ArgumentParser object
-    parser = argparse.ArgumentParser(description='Train and save a stable agent for stock trading')
-
-    # add an argument for the file path
-    parser.add_argument('file_path', type=str, help='path to the JSON file with stock_name, start_date, num_days, interval, init_balance, output_path')
-
-    # parse the command-line arguments
-    args = parser.parse_args()
-
+def full_run(json_file_path):
     # read the JSON file
-    with open(args.file_path, 'r') as f:
+    with open(json_file_path, 'r') as f:
         config = json.load(f)
 
     # extract the configuration parameters
@@ -104,6 +95,21 @@ def main():
         # join path and name
         path = os.path.join(output_path, name)
         output_stable_agent(trained_model,path)
+
+
+def main():
+    # create an ArgumentParser object
+    parser = argparse.ArgumentParser(description='Train and save a stable agent for stock trading')
+
+    # add an argument for the file path
+    parser.add_argument('file_path', type=str, help='path to the JSON file with stock_name, start_date, num_days, interval, init_balance, output_path')
+
+    # parse the command-line arguments
+    args = parser.parse_args()
+
+    # run the full run
+    full_run(args.file_path)
+    
 
 if __name__ == "__main__":
     main()

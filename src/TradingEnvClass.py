@@ -218,7 +218,7 @@ class StockTradingEnv(gym.Env):
         
         # if net_worth is below 0, or current_step is greater than max_step, then environment terminates
         truncated = (self.current_step >= self.max_step)
-        terminated = (self.net_worth <= 0 or self.balance <= 0)
+        terminated = bool(self.net_worth <= 0 or self.balance <= 0)
 
         if self.normalize:
             obs = self._next_observation_norm()

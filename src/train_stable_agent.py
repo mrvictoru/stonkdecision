@@ -70,6 +70,11 @@ def full_run(json_file_path):
     init_balance = config['init_balance']
     output_path = config['output_path']
     
+    # check if output_path folder exists
+    if not os.path.exists(output_path):
+        print("Creating output folder: ", output_path)
+        os.makedirs(output_path)
+    
     # create the trading environment
     stable_env, obs_space, act_space, col, data = makegymenv(stock_name, start_date, num_days, interval, normalize=True, init_balance=init_balance)
 

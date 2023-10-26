@@ -105,7 +105,7 @@ def save_data(data, file_name):
     with open(file_name, 'w') as outfile:
         json.dump(data, outfile)
 
-def full_curate_run(json_file_path, agents_folder, num_episodes = 200):
+def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_range = [0.2, 0.6]):
     # read the JSON file
     with open(json_file_path, 'r') as f:
         config = json.load(f)
@@ -143,13 +143,33 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200):
     # run random agent in env and collect data
     print("Running random agent")
     agent = Agent(env, 'random')
-    data = run_env(agent, env, num_episodes=200)
+    data = run_env(agent, env, num_episodes)
     # save data
     print("Saving data to ", output_path)
     filename = os.path.join(output_path, 'random_'+stock_name+'_'+start_date+'.json')
     save_data(data, filename)
 
     # run algo agent in env and collect data
+    print("Running momentum algo agents")
+    momentum_algo = 'momentum_stoch_rsi'
+    # find the momentum_stoch_rsi column
+    momentum_stoch_rsi_col = col.index('momentum_stoch_rsi')
+    momentum_trade_algo = TradingAlgorithm(algo_type = momentum_algo, indicator_column = momentum_stoch_rsi_col, amount_range = trade_range)
+    momentum_algo_agent = Agent(env, 'algo', algo = momentum_trade_algo)
+    data = run_env(momentum_algo_agent, env, num_episodes, normalize = False)
+    # save data
+    print("Saving data to ", output_path)
+    filename = os.path.join(output_path, momentum_algo+'_'+stock_name+'_'+start_date+'.json')
 
+    print("Running trend sma fast algo agents")
+    trend_sma_fast_algo = 'trend_sma_fast'
+    # find the trend_sma_fast column
+    trend_sma_fast_col = col.index('trend_sma_fast')
+    trend_sma_fast_trade_algo = TradingAlgorithm(algo_type = trend_sma_fast_algo, indicator_column = trend_sma_fast_col, amount_range = trade_range)
+    trend_sma_fast_algo_agent = Agent(env, 'algo', algo = trend_sma_fast_trade_algo)
+    data = run_env(trend_sma_fast_algo_agent, env, num_episodes, normalize = False)
+    # save data
+    print("Saving data to ", output_path)
+    filename = os.path.join(output_path, trend_sma_fast_algo+'_'+stock_name+'_'+start_date+'.json')
 
     

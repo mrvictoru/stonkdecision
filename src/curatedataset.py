@@ -82,7 +82,7 @@ def run_env(agent, env, num_episodes, normalize = False, deterministic=False):
 
             # check if the episode is done
             if terminated or truncated:
-                print('Terminated: ', terminated, '; Truncated: ', truncated)
+                #print('Terminated: ', terminated, '; Truncated: ', truncated)
                 print('env current step ', env.current_step, ' env max step ', env.max_step)
                 done = True
                 print('Episode: ', i, 'Timestep:', timestep,  ' done')

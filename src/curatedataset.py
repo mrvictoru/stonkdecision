@@ -83,7 +83,7 @@ def run_env(agent, env, num_episodes, normalize = False, deterministic=False):
             # check if the episode is done
             if terminated or truncated:
                 #print('Terminated: ', terminated, '; Truncated: ', truncated)
-                print('env current step ', env.current_step, ' env max step ', env.max_step)
+                #print('env current step ', env.current_step, ' env max step ', env.max_step)
                 done = True
                 print('Episode: ', i, 'Timestep:', timestep,  ' done')
             else:
@@ -117,6 +117,11 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     interval = config['interval']
     init_balance = config['init_balance']
     output_path = config['output_path']
+
+    # check if output_path folder exists
+    if not os.path.exists(output_path):
+        print("Creating output folder: ", output_path)
+        os.makedirs(output_path)
 
     # create the trading environment
     print("Creating environment")

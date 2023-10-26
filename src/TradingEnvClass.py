@@ -21,7 +21,7 @@ VOLUME_CHART_HEIGHT = 0.33
 ALPHA = 1
 # BETA is the penalty for buying stock with high cost basis
 BETA = 1
-# GAMMA is the penalty for selling stock when there is no stock held
+# GAMMA is the penalty for selling stock when there is no stock held or buying stock when there is not enough balance
 GAMMA = 100
 
 
@@ -253,9 +253,12 @@ class StockTradingEnv(gym.Env):
             prev_cost = self.cost_basis * self.shares_held
             additional_cost = shares_bought * execute_price
             
+            # remove safeguard to allow buying with negative balance
+            """
             if self.balance < additional_cost:
                 shares_bought = 0
                 additional_cost = 0
+            """
 
             self.balance -= additional_cost
             # calculate the new cost basis, check if it is divide by zero, if it is then set it to the execute price
@@ -266,11 +269,11 @@ class StockTradingEnv(gym.Env):
             
             self.shares_held += shares_bought
 
-            if shares_bought > 0:
+            if self.balance < 0:
                 # change action taken to 1 to indicate buy and the amount of shares bought
                 action_taken = [1, shares_bought, 0]
             else :
-                action_taken = [0, shares_bought, 1]
+                action_taken = [1, shares_bought, 1]
 
 
         elif -1 <= action_type <= -2/3:
@@ -279,7 +282,8 @@ class StockTradingEnv(gym.Env):
             # if shares sold is 0 then make it one unless we have no shares
             if shares_sold < 1 and self.shares_held > 0:
                 shares_sold = 1
-            else :
+            # otherwise if we have no shares then set shares sold to 0
+            elif self.shares_held == 0:
                 shares_sold = 0
             self.balance += shares_sold * execute_price
             self.shares_held -= shares_sold

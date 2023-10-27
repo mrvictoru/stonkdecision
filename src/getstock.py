@@ -56,7 +56,7 @@ def get_stock_data_yf_between(stock_name, start_date, end_date, interval) -> pd.
     return data
 
 # helper function that get stock data between two dates as well as the technical indicators
-def get_stock_data_yf_between_with_indicators(stock_name, start_date, end_date, interval, indicators) -> pd.DataFrame:
+def get_stock_data_yf_between_with_indicators(stock_name, start_date, end_date, interval, indicators=['all']) -> pd.DataFrame:
     """
     Get stock data from yahoo finance
 
@@ -74,8 +74,10 @@ def get_stock_data_yf_between_with_indicators(stock_name, start_date, end_date, 
     data = yf.download(stock_name, start=start_date, end=end_date, interval=interval)
     data = to_numeric_and_downcast_data(data)
     data = ta.add_all_ta_features(data, open="Open", high="High", low="Low", close="Close", volume="Volume", fillna=True)
-    # remove columns that is not in the indicators
-    for col in data.columns:
-        if col not in indicators and col not in ['Open', 'High', 'Low', 'Close']:
-            data = data.drop(col, axis=1)
+    # check if indicators is not all
+    if indicators[0] != 'all':
+        # remove columns that is not in the indicators
+        for col in data.columns:
+            if col not in indicators and col not in ['Open', 'High', 'Low', 'Close']:
+                data = data.drop(col, axis=1)
     return data

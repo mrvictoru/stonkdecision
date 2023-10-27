@@ -75,7 +75,7 @@ def get_stock_data_yf_between_with_indicators(stock_name, start_date, end_date, 
     data = to_numeric_and_downcast_data(data)
     data = ta.add_all_ta_features(data, open="Open", high="High", low="Low", close="Close", volume="Volume", fillna=True)
     # check if indicators is not all
-    if indicators[0] != 'all':
+    if not(indicators[0] == 'all'):
         # remove columns that is not in the indicators
         for col in data.columns:
             if col not in indicators and col not in ['Open', 'High', 'Low', 'Close']:

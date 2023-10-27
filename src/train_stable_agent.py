@@ -67,6 +67,7 @@ def full_run(json_file_path):
     start_date = config['start_date']
     num_days = config['num_days']
     interval = config['interval']
+    indicators = config['indicators']
     init_balance = config['init_balance']
     output_path = config['output_path']
     
@@ -76,7 +77,7 @@ def full_run(json_file_path):
         os.makedirs(output_path)
     
     # create the trading environment
-    stable_env, obs_space, act_space, col, data = makegymenv(stock_name, start_date, num_days, interval, normalize=True, init_balance=init_balance)
+    stable_env, obs_space, act_space, col, data = makegymenv(stock_name, start_date, num_days, interval, indicators=indicators, normalize=True, init_balance=init_balance)
 
     try:
         check_env(stable_env)

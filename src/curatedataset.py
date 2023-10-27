@@ -17,7 +17,7 @@ import os
 import re
 
 # start_date need to be in format of 'YYYY-MM-DD'
-def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volume', 'volume_cmf', 'trend_macd', 'momentum_rsi', 'momentum_stoch_rsi'], init_balance = 20000, render = 'None', random = False, normalize = False):
+def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volume', 'volume_cmf', 'trend_macd', 'momentum_rsi'], init_balance = 20000, render = 'None', random = False, normalize = False):
     # work out the end_date from start_date and period
     try:
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
@@ -115,6 +115,7 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     start_date = config['start_date']
     num_days = config['num_days']
     interval = config['interval']
+    indicators = config['indicators']
     init_balance = config['init_balance']
     output_path = config['output_path']
 
@@ -125,7 +126,7 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
 
     # create the trading environment
     print("Creating environment")
-    env, obs_space_dim, act_space_dim, col, data = makegymenv(stock_name, start_date, num_days, interval, normalize=False, init_balance=init_balance)
+    env, obs_space_dim, act_space_dim, col, data = makegymenv(stock_name, start_date, num_days, interval, indicators=indicators, normalize=False, init_balance=init_balance)
 
     print("Getting stable agents")
     # get trained stable agents' path insider agents_folder_path

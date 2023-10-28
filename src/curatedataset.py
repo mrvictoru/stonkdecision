@@ -52,6 +52,7 @@ def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volum
 def run_env(agent, env, num_episodes, normalize = False, deterministic=False):
     # data dictionary to store data
     data = {'data':[]}
+    agent.reset()
     # loop through episodes
     for i in range (num_episodes):
         # dictionary to store state, ation, reward, timestep
@@ -105,7 +106,7 @@ def save_data(data, file_name):
     with open(file_name, 'w') as outfile:
         json.dump(data, outfile)
 
-def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_range = [0.2, 0.6]):
+def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_range = [0.05, 0.3]):
     # read the JSON file
     with open(json_file_path, 'r') as f:
         config = json.load(f)
@@ -140,7 +141,7 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
         agent = Agent(env, agent_type, agent_path)
         # run agent in env and collect data
         print("Running agent: ", agent_type)
-        data = run_env(agent, env, num_episodes=200, normalize=True, deterministic=True)
+        data = run_env(agent, env, num_episodes=200, normalize=True, deterministic=False)
         # save data
         print("Saving data to ", output_path)
         filename = os.path.join(output_path, agent_type+'_'+stock_name+'_'+start_date+'.json')
@@ -160,22 +161,25 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     momentum_algo = 'momentum_stoch_rsi'
     # find the momentum_stoch_rsi column
     momentum_stoch_rsi_col = col.index('momentum_stoch_rsi')
+    print("momentum_stoch_rsi_col: ", momentum_stoch_rsi_col)
     momentum_trade_algo = TradingAlgorithm(algo_type = momentum_algo, indicator_column = momentum_stoch_rsi_col, amount_range = trade_range)
     momentum_algo_agent = Agent(env, 'algo', algo = momentum_trade_algo)
     data = run_env(momentum_algo_agent, env, num_episodes, normalize = False)
     # save data
     print("Saving data to ", output_path)
     filename = os.path.join(output_path, momentum_algo+'_'+stock_name+'_'+start_date+'.json')
+    save_data(data, filename)
 
     print("Running trend sma fast algo agents")
     trend_sma_fast_algo = 'trend_sma_fast'
     # find the trend_sma_fast column
     trend_sma_fast_col = col.index('trend_sma_fast')
+    print("trend_sma_fast_col: ", trend_sma_fast_col)
     trend_sma_fast_trade_algo = TradingAlgorithm(algo_type = trend_sma_fast_algo, indicator_column = trend_sma_fast_col, amount_range = trade_range)
     trend_sma_fast_algo_agent = Agent(env, 'algo', algo = trend_sma_fast_trade_algo)
     data = run_env(trend_sma_fast_algo_agent, env, num_episodes, normalize = False)
     # save data
     print("Saving data to ", output_path)
     filename = os.path.join(output_path, trend_sma_fast_algo+'_'+stock_name+'_'+start_date+'.json')
-
+    save_data(data, filename)
     

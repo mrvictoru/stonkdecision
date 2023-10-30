@@ -65,8 +65,6 @@ class TradingAlgorithm:
                 # check if we can afford to buy by checking if close price is above the balance,
                 if state[3] > state[-6]:
                     # hold the current position
-                    print("balance: ", state[-6], "; close: ", state[3])
-                    print("momentum_stoch_rsi check hold too poor")
                     self.bought = False
                     # return a random number between 0.2 and -0.2 as the confidence and action
                     return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
@@ -95,12 +93,12 @@ class TradingAlgorithm:
             # load the trend_sma_fast indicator from the observation
             trend_sma_fast = state[self.indicator_column]
             # calculate the ratio of trend_sma_fast to the current close price (state[3])
-            ratio = trend_sma_fast / state[3]
+            ratio = state[3]/trend_sma_fast
             # add the current ratio to the memory
             self.memory1.append(ratio)
-            print("trend_sma_fast check trend_sma_fast: ", trend_sma_fast)
-            print("trend_sma_fast check ratio: ", ratio)
-            print("trend_sma_fast check memory len: ", len(self.memory1))
+            #print("trend_sma_fast check trend_sma_fast: ", trend_sma_fast)
+            #print("trend_sma_fast check ratio: ", ratio)
+            #print("trend_sma_fast check memory len: ", len(self.memory1))
 
             # check if we have enough data points in memory
             if len(self.memory1) >= self.window_size:
@@ -114,34 +112,32 @@ class TradingAlgorithm:
                     # check if we can afford to buy by checking if close price is below the balance,
                     if state[3] > state[-6]:
                         # hold the current position
-                        print("balance: ", state[-6], "; close: ", state[3])
-                        print("trend_sma check hold too poor")
                         self.bought = False
                         # return a random number between 0.2 and -0.2 as the confidence and action
                         return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
                     else:
                         # Buy the stock if the ratio is below the mean - std
                         self.bought = True
-                        print("trend_sma check buy")
+                        #print("trend_sma check buy")
                         # calculate return confidence and action
                         confidence = buy_trend_sma_fast_confidence(ratio, mean, std)
-                        print("trend_sma check confidence: ", confidence)
+                        #print("trend_sma check confidence: ", confidence)
                         return np.array([confidence, buy_action(confidence, self.amount_range[0], self.amount_range[1])])
                     
                 elif ratio > mean + std and self.bought:
                     # Sell the stock if the ratio is above the mean + std
                     self.bought = False
-                    print("trend_sma check sell")
+                    #print("trend_sma check sell")
                     # calculate return confidence and action
                     confidence = sell_trend_sma_fast_confidence(ratio, mean, std)
-                    print("trend_sma check confidence: ", confidence)
+                    #print("trend_sma check confidence: ", confidence)
                     return np.array([confidence, sell_action(confidence, self.amount_range[0], self.amount_range[1])])
-            else:
-                # Hold the current position
-                print("trend_sma check hold")
-                self.bought = False
-                # return a random number between 0.2 and -0.2 as the confidence and action
-                return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
+
+            # Hold the current position
+            #print("trend_sma check hold")
+            self.bought = False
+            # return a random number between 0.2 and -0.2 as the confidence and action
+            return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
 
 
 

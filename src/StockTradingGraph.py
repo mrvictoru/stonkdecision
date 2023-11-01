@@ -15,6 +15,7 @@ MARKER_SIZE = 80
 
 import mplfinance as mpf
 import numpy as np
+import pandas as pd
 
 
 class StockTradingGraph:
@@ -99,3 +100,42 @@ class StockTradingGraph:
         # return the fig
         return fig
 
+# write a function that will take data with stock price (Open, High, Low, Close) and action history (buy, sell, amount) then create a candlestick chart with buy and sell marker
+def plot_stock_trading_data(state: np, col: list, action: np, windows_size=20):
+    # get the index of open, high, low, close and volume from matching the column name in col
+    open_idx = col.index('Open')
+    high_idx = col.index('High')
+    low_idx = col.index('Low')
+    close_idx = col.index('Close')
+    volume_idx = col.index('Volume')
+
+    Open = state[:,open_idx]
+    High = state[:,high_idx]
+    Low = state[:,low_idx]
+    Close = state[:,close_idx]
+    Volume = state[:,volume_idx]
+
+    # create a dataframe with the stock price data
+    df = pd.DataFrame({'Open':Open, 'High':High, 'Low':Low, 'Close':Close})
+    # create a dataframe with the volume data
+    dfvolume = pd.DataFrame({'Volume':Volume})
+    # create a dataframe with the action history
+    action_history = pd.DataFrame(action)
+    # create a dataframe with the net worth history
+    net_worth_history = pd.DataFrame(net_worth)
+
+    # create an instance of the StockTradingGraph class
+    stock_graph = StockTradingGraph(df, dfvolume, action_history, net_worth_history, windows_size)
+
+    # create a figure
+    fig = plt.figure(figsize=(12,8))
+    # create a grid spec
+    gs = fig.add_gridspec(3, 1)
+    # add a subplot for the candlestick chart
+    ax1 = fig.add_subplot(gs[0:2, :])
+    # add a subplot for the net worth
+    ax2 = fig.add_subplot(gs[2, :])
+    # plot the stock trading graph
+    stock_graph.plot(len(df)-1)
+    # show the plot
+    plt.show()

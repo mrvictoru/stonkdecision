@@ -118,7 +118,7 @@ class StockTradingGraph:
         return fig
 
 # write a function that will take data with stock price (Open, High, Low, Close) and action history (buy, sell, amount) then create a candlestick chart with buy and sell marker
-def plot_stock_trading_data(state: np, col: list, action_history: np):
+def plot_stock_trading_data(state: np, col: list, action_history: np, date: list):
     # get the index of open, high, low, close and volume from matching the column name in col
     open_idx = col.index('Open')
     high_idx = col.index('High')
@@ -135,8 +135,11 @@ def plot_stock_trading_data(state: np, col: list, action_history: np):
     net_worth = state[:,net_worth_dix]
     windows_size = state.shape[0]
 
+    dt_index = pd.to_datetime(date)
+
     # create a dataframe with the stock price data
     df = pd.DataFrame({'Open':Open, 'High':High, 'Low':Low, 'Close':Close})
+    df.index = dt_index
     # create an instance of the StockTradingGraph class
     stock_graph = StockTradingGraph(df, None, action_history, net_worth, windows_size)
 

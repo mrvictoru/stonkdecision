@@ -49,9 +49,9 @@ def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volum
     return env, env.observation_space.shape[0], env.action_space.shape[0], env.columns, stock_data
 
 # second group of functions are to get agent, run it in the environment, collect trading data and save as json dataset
-def run_env(agent, env, num_episodes, normalize = False, deterministic=False):
+def run_env(agent, env, num_episodes, date, normalize = False, deterministic=False):
     # data dictionary to store data
-    data = {'data':[], 'num_episodes':num_episodes, 'normalize':normalize, 'env_state': env.columns}
+    data = {'data':[], 'num_episodes':num_episodes, 'normalize':normalize, 'env_state': env.columns, 'date':date}
     agent.reset()
     # loop through episodes
     for i in range (num_episodes):
@@ -128,6 +128,7 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     # create the trading environment
     print("Creating environment")
     env, obs_space_dim, act_space_dim, col, data = makegymenv(stock_name, start_date, num_days, interval, indicators=indicators, normalize=False, init_balance=init_balance)
+    env_date = data.index.strftime('%Y-%m-%d').tolist()
 
     print("Getting stable agents")
     # get trained stable agents' path insider agents_folder_path
@@ -141,7 +142,7 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
         agent = Agent(env, agent_type, agent_path)
         # run agent in env and collect data
         print("Running agent: ", agent_type)
-        data = run_env(agent, env, num_episodes=200, normalize=True, deterministic=False)
+        data = run_env(agent, env, num_episodes=200, date=env_date, normalize=True, deterministic=False)
         # save data
         print("Saving data to ", output_path)
         filename = os.path.join(output_path, agent_type+'_'+stock_name+'_'+start_date+'.json')
@@ -150,7 +151,7 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     # run random agent in env and collect data
     print("Running random agent")
     agent = Agent(env, 'random')
-    data = run_env(agent, env, num_episodes)
+    data = run_env(agent, env, num_episodes, env_date)
     # save data
     print("Saving data to ", output_path)
     filename = os.path.join(output_path, 'random_'+stock_name+'_'+start_date+'.json')
@@ -164,7 +165,7 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     print("momentum_stoch_rsi_col: ", momentum_stoch_rsi_col)
     momentum_trade_algo = TradingAlgorithm(algo_type = momentum_algo, indicator_column = momentum_stoch_rsi_col, amount_range = trade_range)
     momentum_algo_agent = Agent(env, 'algo', algo = momentum_trade_algo)
-    data = run_env(momentum_algo_agent, env, num_episodes, normalize = False)
+    data = run_env(momentum_algo_agent, env, num_episodes, env_date, normalize = False)
     # save data
     print("Saving data to ", output_path)
     filename = os.path.join(output_path, momentum_algo+'_'+stock_name+'_'+start_date+'.json')
@@ -177,7 +178,7 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     print("trend_sma_fast_col: ", trend_sma_fast_col)
     trend_sma_fast_trade_algo = TradingAlgorithm(algo_type = trend_sma_fast_algo, indicator_column = trend_sma_fast_col, amount_range = trade_range)
     trend_sma_fast_algo_agent = Agent(env, 'algo', algo = trend_sma_fast_trade_algo)
-    data = run_env(trend_sma_fast_algo_agent, env, num_episodes, normalize = False)
+    data = run_env(trend_sma_fast_algo_agent, env, num_episodes, env_date, normalize = False)
     # save data
     print("Saving data to ", output_path)
     filename = os.path.join(output_path, trend_sma_fast_algo+'_'+stock_name+'_'+start_date+'.json')

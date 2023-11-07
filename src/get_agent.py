@@ -44,6 +44,7 @@ class TradingAlgorithm:
     def __init__(self, algo_type = 'momentum_stoch_rsi', indicator_column = -1, amount_range = [0.05, 0.3],window_size = 20):
         self.indicator_column = indicator_column
         self.bought = False
+        self.sold = False
         self.memory1 = []
         self.type = algo_type
         self.amount_range = amount_range
@@ -66,17 +67,20 @@ class TradingAlgorithm:
                 if state[3] > state[-6]:
                     # hold the current position
                     self.bought = False
+                    self.sold = False
                     # return a random number between 0.2 and -0.2 as the confidence and action
                     return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
                 else:
                     # Buy the stock if it is oversold 
                     self.bought = True
+                    self.sold = False
                     # calculate return confidence and action
                     confidence = oversold_confidence(momentum_stoch_rsi)
                     return np.array([confidence, buy_action(confidence, self.amount_range[0], self.amount_range[1])])
                 
-            elif momentum_stoch_rsi > 0.8 and self.bought:
+            elif momentum_stoch_rsi > 0.8 and not self.sold:
                 # Sell the stock if it is overbought
+                self.sold = True
                 self.bought = False
                 # calculate return confidence and action
                 confidence = overbought_confidence(momentum_stoch_rsi)
@@ -85,6 +89,7 @@ class TradingAlgorithm:
             else:
                 # Hold the current position
                 self.bought = False
+                self.sold = False
                 # return a random number between 0.2 and -0.2 as the confidence and action
                 return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
             
@@ -113,20 +118,23 @@ class TradingAlgorithm:
                     if state[3] > state[-6]:
                         # hold the current position
                         self.bought = False
+                        self.sold = False
                         # return a random number between 0.2 and -0.2 as the confidence and action
                         return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
                     else:
                         # Buy the stock if the ratio is below the mean - std
                         self.bought = True
+                        self.sold = False
                         #print("trend_sma check buy")
                         # calculate return confidence and action
                         confidence = buy_trend_sma_fast_confidence(ratio, mean, std)
                         #print("trend_sma check confidence: ", confidence)
                         return np.array([confidence, buy_action(confidence, self.amount_range[0], self.amount_range[1])])
                     
-                elif ratio > mean + std and self.bought:
+                elif ratio > mean + std and not self.sold:
                     # Sell the stock if the ratio is above the mean + std
                     self.bought = False
+                    self.sold = True
                     #print("trend_sma check sell")
                     # calculate return confidence and action
                     confidence = sell_trend_sma_fast_confidence(ratio, mean, std)
@@ -136,6 +144,7 @@ class TradingAlgorithm:
             # Hold the current position
             #print("trend_sma check hold")
             self.bought = False
+            self.sold = False
             # return a random number between 0.2 and -0.2 as the confidence and action
             return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
 
@@ -147,6 +156,9 @@ def oversold_confidence(momentum_stoch_rsi):
     confidence = (momentum_stoch_rsi - 0) * (0.7 - 1) / (0.2 - 0) + 1
     # add a random value between -0.05 and 0.05 to the confidence
     confidence += np.random.uniform(-0.05, 0.05)
+    # if the confidence is above 1, set it to 1
+    if confidence > 1:
+        confidence = 1
     return confidence
 
 def overbought_confidence(momentum_stoch_rsi):
@@ -154,6 +166,9 @@ def overbought_confidence(momentum_stoch_rsi):
     confidence = (momentum_stoch_rsi - 0.8) * (-1 - (-0.7)) / (1 - 0.8) + (-0.7)
     # add a random value between -0.05 and 0.05 to the confidence
     confidence += np.random.uniform(-0.05, 0.05)
+    # if the confidence is below -1, set it to -1
+    if confidence < -1:
+        confidence = -1
     return confidence
 
 def buy_trend_sma_fast_confidence(ratio, mean, std):

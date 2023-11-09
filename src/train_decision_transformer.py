@@ -196,17 +196,29 @@ def get_combinedataset(path, context_len = 60, gamma = 0.8, rtg_scale = 100, dev
             if '.json' in file:
                 files.append(os.path.join(r, file))
     
+    # open the first file to get the env_state
+    with open(files[0], 'r') as f:
+        env_state = json.load(f)['env_state']
+    
     # create dataset objects from json files
     datasets = []
+    env_states = []
     for file in files:
+        with open(file, 'r') as f:
+            env_states.append(json.load(f)['env_state'])
         dataset = CustomTrajDataset(file, context_len, gamma, rtg_scale, device)
         print(f"{file} has {len(dataset)} trajectories")
         datasets.append(dataset)
     
+    # check if all env_states are the same
+    if not all(env_state == env_states[0] for env_state in env_states):
+        print("Not all env_states are the same in the datasets")
+        raise ValueError("All env_states must be the same")
+    
     # combine the datasets
     combinedataset = torch.utils.data.ConcatDataset(datasets)
     print(f"Combined dataset has {len(combinedataset)} trajectories")
-    return combinedataset
+    return combinedataset, env_state
 
 def init_training_object(dataset, batch_size = 32, shuffle=True, lr = 1e-4, wt_decay = 1e-4, eps = 1e-6, warmup_steps = 1e5, growth_interval = 150 , context_len = 60, hp_scale = 2, drop_p = 0.2, device = "cpu"):
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=2)
@@ -252,7 +264,7 @@ def init_training_object(dataset, batch_size = 32, shuffle=True, lr = 1e-4, wt_d
     return dataloader, model, optimizer, scheduler, scaler, model_params
 
 # custom training function which take in the model, dataset, optimizer, scheduler, scaler, n_epochs, min_scale
-def train_model(model, dataloader, optimizer, scheduler, scaler, n_epochs = 80, min_scale = 128):
+def train_model(model, dataloader, optimizer, scheduler, scaler, n_epochs = 80, min_scale = 128, device = "cpu"):
 
     # record the start time
     start_time = datetime.datetime.now()
@@ -323,10 +335,10 @@ def train_model(model, dataloader, optimizer, scheduler, scaler, n_epochs = 80, 
     
     return model, log_action_losses
 
-def full_training_run(path = 'stock_trade_data'):
-    comb_dset = get_combinedataset(path = path, device = device)
-    dataloader, model, optimizer, scheduler, scaler, model_params= init_training_object(comb_dset, device = device)
-    trained_model, log_action_loss = train_model(model, dataloader, optimizer, scheduler, scaler)
+def full_training_run(path = 'stock_trade_data', device = "cpu"):
+    comb_dset, env_state = get_combinedataset(path = path, device = device)
+    dataloader, model, optimizer, scheduler, scaler, model_params = init_training_object(comb_dset, device = device)
+    trained_model, log_action_loss = train_model(model, dataloader, optimizer, scheduler, scaler, device = device)
 
     plt.plot(log_action_loss)
     plt.xlabel('Epoch')
@@ -334,6 +346,9 @@ def full_training_run(path = 'stock_trade_data'):
     plt.yscale('log')
     plt.title('Log Action Loss vs Epoch')
     plt.show()
+
+    # add env_state to model_params
+    model_params['env_state'] = env_state
 
     return trained_model, model_params
 

@@ -11,6 +11,8 @@ from TradingEnvClass import StockTradingEnv
 
 from get_agent import Agent, TradingAlgorithm
 
+from StockTradingGraph import plot_stock_trading_data
+
 import numpy as np
 import json
 import os
@@ -183,4 +185,45 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     print("Saving data to ", output_path)
     filename = os.path.join(output_path, trend_sma_fast_algo+'_'+stock_name+'_'+start_date+'.json')
     save_data(data, filename)
+
+def evaluate_data(data_path):
+    # read the json file from data_path
+    with open(data_path, 'r') as f:
+        data = json.load(f)
     
+    # get the number of episodes
+    num_episodes = data['num_episodes']
+    col = data['env_state']
+
+    # select 10 random episodes
+    random_episodes = np.random.randint(0, num_episodes-1, 10)
+
+    # calculate the mean and std of reward for the 10 random episodes
+    rewards = []
+    for episode in random_episodes:
+        rewards.append(np.sum(data['data'][episode]['reward']))
+    mean_sum_reward = np.mean(rewards)
+    std_sum_reward = np.std(rewards)
+    
+    print("Mean simple sum reward: ", mean_sum_reward)
+    print("Std simple sum reward: ", std_sum_reward)
+
+    # calculate the mean and std of networth growth for the 10 random episodes
+    end_networth = []
+    net_worth_dix = col.index('Net_worth')
+    for episode in random_episodes:
+        end_networth.append(data['data'][episode]['state'][-1][net_worth_dix]-data['data'][episode]['state'][0][net_worth_dix])
+    mean_end_networth = np.mean(end_networth)
+    std_end_networth = np.std(end_networth)
+
+    print("Mean net worth growth: ", mean_end_networth)
+    print("Std net worth growth: +/-", std_end_networth)
+
+    # plot one of the random episodes
+    episode = random_episodes[2]
+    print("Plotting episode: ", episode)
+    state = np.array(data['data'][episode]['state'])
+    action = np.array(data['data'][episode]['action'])
+    date = data['date'][:state.shape[0]]
+    plot_stock_trading_data(state, col, action, date)
+

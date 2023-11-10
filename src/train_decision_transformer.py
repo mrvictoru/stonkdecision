@@ -84,12 +84,11 @@ class CustomTrajDataset(Dataset):
         
         else:
             print("Padding data to make it homogeneous.")
-            max_len = max([len(traj) for traj in self.data['state']])
             self.data = self.data.with_format('pandas')
             #min_len = 10**6
 
             # find the maximum length of the state sequences
-            max_len = max([len(traj) for traj in self.data['state']])
+            max_size = self.data['state'].apply(len).max()
 
             # pad all sequences to the maximum length
             padded_states = []

@@ -43,7 +43,7 @@ def compute_rtg_torch(reward, gamma, rtg_scale):
     rtgs = torch.zeros_like(reward)
     for i,reward in enumerate(torch.unbind(reward, dim=0)):
         rtg = discount_cumsum_torch(reward, gamma)/rtg_scale
-        rtgs[i,:,:] = rtg
+        rtgs[i,:] = rtg
     return rtgs
 
 # define a custom dataset class which loads the data, modifies the reward to be the discounted cumulative sum and apply trajectory masking
@@ -83,19 +83,25 @@ class CustomTrajDataset(Dataset):
 
         
         else:
-            print("Processing data as pandas dataframe.")
+            print("Padding data to make it homogeneous.")
+            max_len = max([len(traj) for traj in self.data['state']])
             self.data = self.data.with_format('pandas')
             #min_len = 10**6
 
-            # calculate mean and std of states
-            states = []
+            # find the maximum length of the state sequences
+            max_len = max([len(traj) for traj in self.data['state']])
 
+            # pad all sequences to the maximum length
+            padded_states = []
             for traj in self.data['state']:
-                states.append(traj)
-                #if len(traj) < min_len:
-                #    min_len = len(traj)
-            states = np.concatenate(states, axis=0)
-            self.state_mean, self.state_std = np.mean(states, axis=0), np.std(states, axis=0) + 1e-6
+                padded_traj = np.pad(traj, ((0, max_len - len(traj)), (0, 0)), mode='constant')
+                padded_states.append(padded_traj)
+
+            # convert the padded states to a numpy array
+            padded_states = np.array(padded_states)
+
+            # calculate mean and std of states
+            self.state_mean, self.state_std = np.mean(padded_states, axis=0), np.std(padded_states, axis=0) + 1e-6
 
             # calculate rtg
             self.rtg = pd.Series(compute_rtg(self.data, gamma, rtg_scale))
@@ -221,7 +227,7 @@ def get_combinedataset(path, context_len = 60, gamma = 0.8, rtg_scale = 100, dev
     return combinedataset, env_state
 
 def init_training_object(dataset, batch_size = 32, shuffle=True, lr = 1e-4, wt_decay = 1e-4, eps = 1e-6, warmup_steps = 1e5, growth_interval = 150 , context_len = 60, hp_scale = 2, drop_p = 0.2, device = "cpu"):
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=2)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
     # define model parameters
     # sample 1 batch from dataloader to get the shape of the data

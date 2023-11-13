@@ -83,30 +83,28 @@ class CustomTrajDataset(Dataset):
 
         
         else:
-            print("Padding data to make it homogeneous.")
+
+            print("Processing data as pandas dataframe.")
             self.data = self.data.with_format('pandas')
             #min_len = 10**6
 
-            # find the maximum length of the state sequences
-            max_size = self.data['state'].apply(len).max()
-
-            # pad all sequences to the maximum length
-            padded_states = []
-            for traj in self.data['state']:
-                padded_traj = np.pad(traj, ((0, max_len - len(traj)), (0, 0)), mode='constant')
-                padded_states.append(padded_traj)
-
-            # convert the padded states to a numpy array
-            padded_states = np.array(padded_states)
-
             # calculate mean and std of states
-            self.state_mean, self.state_std = np.mean(padded_states, axis=0), np.std(padded_states, axis=0) + 1e-6
+            states = []
+
+            for traj in self.data['state']:
+                states.append(traj)
+                #if len(traj) < min_len:
+                #    min_len = len(traj)
+            states = np.concatenate(states, axis=0)
+            self.state_mean, self.state_std = np.mean(states, axis=0), np.std(states, axis=0) + 1e-6
 
             # calculate rtg
             self.rtg = pd.Series(compute_rtg(self.data, gamma, rtg_scale))
 
             # get the len of the dataset
             self.stateshape = len(self.data['state'])
+            
+        print("Dataset length: ", self.stateshape)
             
         print("Dataset length: ", self.stateshape)
 

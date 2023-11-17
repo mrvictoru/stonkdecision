@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import datetime
 
 import numpy as np
+import polars as pl
 import pandas as pd
 import torch
 import torch.nn.functional as F
@@ -52,59 +53,23 @@ class CustomTrajDataset(Dataset):
         self.gamma = gamma
         self.context_len = context_len
         self.device = device
-        self.data = load_dataset("json", data_files = file_name, field = 'data')['train']
+        dataset = load_dataset("json", data_files = file_name, field = 'data')['train']
 
-        # check if the data is homogeneous
-        self.homogeneous = True
-        try:
-            check = np.array(self.data['state'])
+        print("Processing data as polars dataframe.")
+        self.data = pl.from_arrow(dataset.data.table)
 
-        except Exception as e:
-            self.homogeneous = False
-            print("Data might not homogeneous, see error below.")
-            print(e)
+        # calculate mean and std of states
+        states = self.data['state'].apply(lambda x: np.array(x)).collect()
+        states = np.concatenate(states, axis=0)
+        self.state_mean, self.state_std = np.mean(states, axis=0), np.std(states, axis=0) + 1e-6
 
-        if self.homogeneous:
-            print("Processing data as torch tensor.")
-            self.data = self.data.with_format('torch')
+        # calculate rtg
+        self.rtg = compute_rtg_torch(pl.from_pandas(self.data['reward'].to_pandas()), gamma, rtg_scale)
+        self.stateshape = len(self.data['state'])
 
-            # calculate mean and std of states
-            states = self.data['state'].to(self.device)
-            states = states.reshape((states.shape[0]*states.shape[1], states.shape[2]))
-            self.state_mean, self.state_std = torch.mean(states, dim=0), torch.std(states, dim=0) + 1e-6
-
-            # calculate rtg
-            self.rtg = compute_rtg_torch(self.data['reward'].to(self.device), gamma, rtg_scale)
-            self.stateshape = self.data['state'].shape[0]
-
-            # move the data to the device
-            self.state = self.data['state'].to(self.device)
-            self.action = self.data['action'].to(self.device)
-
-        
-        else:
-
-            print("Processing data as pandas dataframe.")
-            self.data = self.data.with_format('pandas')
-            #min_len = 10**6
-
-            # calculate mean and std of states
-            states = []
-
-            for traj in self.data['state']:
-                states.append(traj)
-                #if len(traj) < min_len:
-                #    min_len = len(traj)
-            states = np.concatenate(states, axis=0)
-            self.state_mean, self.state_std = np.mean(states, axis=0), np.std(states, axis=0) + 1e-6
-
-            # calculate rtg
-            self.rtg = pd.Series(compute_rtg(self.data, gamma, rtg_scale))
-
-            # get the len of the dataset
-            self.stateshape = len(self.data['state'])
-            
-        print("Dataset length: ", self.stateshape)
+        # move the data to the device
+        self.state = self.data['state'].apply(lambda x: np.array(x)).collect()
+        self.action = self.data['action'].apply(lambda x: np.array(x)).collect()
             
         print("Dataset length: ", self.stateshape)
 

@@ -1,6 +1,7 @@
 jupyter
 numpy
 pandas
+polars
 gymnasium
 opencv-python-headless
 stable-baselines3

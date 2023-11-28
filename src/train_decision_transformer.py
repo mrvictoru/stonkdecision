@@ -59,8 +59,7 @@ class CustomTrajDataset(Dataset):
         self.data = pl.from_arrow(dataset.data.table)
 
         # calculate mean and std of states
-        states = self.data['state'].apply(lambda x: np.array(x)).collect()
-        states = np.concatenate(states, axis=0)
+        states = self.data['state'].apply(lambda x: np.stack(np.array(x)), return_dtype=list)
         self.state_mean, self.state_std = np.mean(states, axis=0), np.std(states, axis=0) + 1e-6
 
         # calculate rtg

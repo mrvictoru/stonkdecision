@@ -36,8 +36,13 @@ def discount_cumsum_torch(x, gamma):
 
 def compute_rtg(data, gamma, rtg_scale):
     rtg = []
-    for reward in data['reward'].apply(lambda x: discount_cumsum(np.array(x, dtype=np.float32), gamma)/rtg_scale):
-        rtg.append(reward)
+    # check if data is polars dataframe or pandas dataframe
+    if isinstance(data, pl.DataFrame):
+        for reward in data['reward'].map_elements(lambda x: discount_cumsum(np.array(x, dtype=np.float32), gamma)/rtg_scale):
+            rtg.append(reward)
+    elif isinstance(data, pd.DataFrame):
+        for reward in data['reward'].apply(lambda x: discount_cumsum(np.array(x, dtype=np.float32), gamma)/rtg_scale):
+            rtg.append(reward)
     return rtg
 
 def compute_rtg_torch(reward, gamma, rtg_scale):
@@ -59,17 +64,18 @@ class CustomTrajDataset(Dataset):
         self.data = pl.from_arrow(dataset.data.table)
 
         # calculate mean and std of states
-        states = self.data['state'].apply(lambda x: np.stack(np.array(x)), return_dtype=list)
-        self.state_mean, self.state_std = np.mean(states, axis=0), np.std(states, axis=0) + 1e-6
+        self.state = self.data['state'].apply(lambda x: np.stack(np.array(x)))
+        self.state_mean = np.mean(np.stack(self.state.apply(lambda x: np.mean(x, axis=0)).to_numpy()), axis=0)
+        self.state_std = np.mean(np.stack(self.state.apply(lambda x: np.std(x, axis=0)).to_numpy()), axis=0)
 
         # calculate rtg
-        self.rtg = compute_rtg_torch(pl.from_pandas(self.data['reward'].to_pandas()), gamma, rtg_scale)
-        self.stateshape = len(self.data['state'])
+        self.rtg = compute_rtg_torch(self.data, gamma, rtg_scale)
 
-        # move the data to the device
-        self.state = self.data['state'].apply(lambda x: np.array(x)).collect()
-        self.action = self.data['action'].apply(lambda x: np.array(x)).collect()
-            
+        # get action
+        self.action = self.data['action'].apply(lambda x: np.stack(np.array(x)))
+
+        # get the length of the dataset
+        self.stateshape = len(self.data['state'])
         print("Dataset length: ", self.stateshape)
 
 

@@ -67,7 +67,7 @@ class CustomTrajDataset(Dataset):
         self.data = pl.DataFrame({
             'state': pldataset['state'].map_elements(lambda x: np.stack(np.array(x))),
             'action': pldataset['action'].map_elements(lambda x: np.stack(np.array(x))),
-            'reward': compute_rtg_torch(self.data, gamma, rtg_scale),
+            'reward': compute_rtg(pldataset, gamma, rtg_scale),
             'timestep': pldataset['timestep'],
         })
 

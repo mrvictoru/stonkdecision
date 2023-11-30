@@ -109,33 +109,26 @@ class CustomTrajDataset(Dataset):
             # sample random start index
             start_idx = np.random.randint(0, data_len - self.context_len)
             
-            if self.homogeneous:
-                state = state[start_idx:start_idx+self.context_len]
-                action = action[start_idx:start_idx+self.context_len]
-                rtg = rtg[start_idx:start_idx+self.context_len]            
-            else:
-
-                # slice the data and convert to torch
-                state = torch.from_numpy(state[start_idx:start_idx+self.context_len])
-                action = torch.from_numpy(action[start_idx:start_idx+self.context_len])
-                rtg = torch.from_numpy(rtg[start_idx:start_idx+self.context_len])
-            timesteps = torch.arange(start=start_idx, end=start_idx + self.context_len, step=1)
+            # slice the data and convert to torch
+            state = torch.tensor(state[start_idx:start_idx+self.context_len])
+            action = torch.tensor(action[start_idx:start_idx+self.context_len])
+            rtg = torch.tensor(rtg[start_idx:start_idx+self.context_len])
+            timesteps = torch.tensor(timesteps[start_idx:start_idx+self.context_len])
             # trajectory mask
             mask = torch.ones(self.context_len, dtype=torch.long)
         else:
             padding_len = self.context_len - data_len
-            if not self.homogeneous:
-                # convert to torch
-                state = torch.from_numpy(state)
-                action = torch.from_numpy(action)
-                rtg = torch.from_numpy(rtg)
+
+            state = torch.tensor(state)
+            action = torch.tensor(action)
+            rtg = torch.tensor(rtg)
 
             # pad the data with zeros
             state = torch.cat([state, torch.zeros((padding_len, *state.shape[1:]))], dim=0)
             action = torch.cat([action, torch.zeros((padding_len, *action.shape[1:]))], dim=0)
             rtg = torch.cat([rtg, torch.zeros((padding_len, *rtg.shape[1:]))], dim=0)
 
-            timesteps = torch.arange(start=0, end=self.context_len, step=1)
+            timesteps = torch.tensor(timesteps)
 
             # trajectory mask
             mask = torch.cat([torch.ones(data_len, dtype=torch.long), torch.zeros(padding_len, dtype=torch.long)], dim=0)
@@ -152,10 +145,8 @@ class CustomTrajDataset(Dataset):
         shape timestep: torch.Size([32, 30])
         shape actions: torch.Size([32, 30, 2])
         """
-        if self.homogeneous:
-            return state.float(), action.float(), rtg, timesteps, mask
-        else:
-            return state.float(), action.float(), rtg.unsqueeze(-1), timesteps, mask
+
+        return state.float(), action.float(), rtg, timesteps, mask
 
 # create a combine dataset object from json files under a directory
 def get_combinedataset(path, context_len = 60, gamma = 0.8, rtg_scale = 100, device = "cpu"):

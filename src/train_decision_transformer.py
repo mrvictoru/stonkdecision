@@ -61,21 +61,23 @@ class CustomTrajDataset(Dataset):
         dataset = load_dataset("json", data_files = file_name, field = 'data')['train']
 
         print("Processing data as polars dataframe.")
-        self.data = pl.from_arrow(dataset.data.table)
+        pldataset = pl.from_arrow(dataset.data.table)
+
+        # create a new polars dataframe with the modified state, action, reward
+        self.data = pl.DataFrame({
+            'state': pldataset['state'].map_elements(lambda x: np.stack(np.array(x))),
+            'action': pldataset['action'].map_elements(lambda x: np.stack(np.array(x))),
+            'reward': compute_rtg_torch(self.data, gamma, rtg_scale),
+            'timestep': pldataset['timestep'],
+        })
 
         # calculate mean and std of states
-        self.state = self.data['state'].apply(lambda x: np.stack(np.array(x)))
-        self.state_mean = np.mean(np.stack(self.state.apply(lambda x: np.mean(x, axis=0)).to_numpy()), axis=0)
-        self.state_std = np.mean(np.stack(self.state.apply(lambda x: np.std(x, axis=0)).to_numpy()), axis=0)
-
-        # calculate rtg
-        self.rtg = compute_rtg_torch(self.data, gamma, rtg_scale)
-
-        # get action
-        self.action = self.data['action'].apply(lambda x: np.stack(np.array(x)))
+        state = self.data['state'].apply(lambda x: np.stack(np.array(x)))
+        self.state_mean = np.mean(np.stack(state.apply(lambda x: np.mean(x, axis=0)).to_numpy()), axis=0)
+        self.state_std = np.mean(np.stack(state.apply(lambda x: np.std(x, axis=0)).to_numpy()), axis=0)
 
         # get the length of the dataset
-        self.stateshape = len(self.data['state'])
+        self.stateshape = len(state)
         print("Dataset length: ", self.stateshape)
 
 
@@ -90,19 +92,15 @@ class CustomTrajDataset(Dataset):
         # check if the data is homogeneous
     
         try:
-            if self.homogeneous:
-                state = self.state[idx]
-                action = self.action[idx]
-                rtg = self.rtg[idx]
-
-            else:
-                state = np.stack(self.data['state'][idx])
-                action = np.stack(self.data['action'][idx])
-                rtg = self.rtg[idx]
+            # get the specific row from the dataset 
+            state = self.data['state'][idx]
+            action = self.data['action'][idx]
+            rtg = self.data['reward'][idx]
+            timesteps = self.data['timestep'][idx]
 
         except IndexError:
             # handle index out of range error
-            raise IndexError(f"Index {idx} out of range for dataset with length {len(self.data['state'])}")
+            raise IndexError(f"Index {idx} out of range for dataset with length {self.stateshape}")
 
 
         data_len = state.shape[0]

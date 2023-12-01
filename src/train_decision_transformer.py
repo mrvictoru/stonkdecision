@@ -10,6 +10,7 @@ import polars as pl
 import pandas as pd
 import torch
 import torch.nn.functional as F
+from torch.nn.utils.rnn import pad_sequence
 
 from datasets.load import load_dataset
 from torch.utils.data import Dataset, DataLoader
@@ -122,13 +123,14 @@ class CustomTrajDataset(Dataset):
             state = torch.tensor(state)
             action = torch.tensor(action)
             rtg = torch.tensor(rtg)
+            timesteps = torch.tensor(timesteps)
 
             # pad the data with zeros
-            state = torch.cat([state, torch.zeros((padding_len, *state.shape[1:]))], dim=0)
-            action = torch.cat([action, torch.zeros((padding_len, *action.shape[1:]))], dim=0)
-            rtg = torch.cat([rtg, torch.zeros((padding_len, *rtg.shape[1:]))], dim=0)
+            state = torch.cat((state, torch.zeros((padding_len, *state.shape[1:]))), dim = 0)
+            action = torch.cat((action, torch.zeros((padding_len, *action.shape[1:]))), dim = 0)
+            rtg = torch.cat((rtg, torch.zeros((padding_len, *rtg.shape[1:]))), dim = 0)
 
-            timesteps = torch.tensor(timesteps)
+            timesteps = torch.cat((timesteps, torch.zeros((padding_len, *timesteps.shape[1:]))), dim = 0)
 
             # trajectory mask
             mask = torch.cat([torch.ones(data_len, dtype=torch.long), torch.zeros(padding_len, dtype=torch.long)], dim=0)

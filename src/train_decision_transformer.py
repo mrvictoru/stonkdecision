@@ -114,7 +114,7 @@ class CustomTrajDataset(Dataset):
             state = torch.tensor(state[start_idx:start_idx+self.context_len])
             action = torch.tensor(action[start_idx:start_idx+self.context_len])
             rtg = torch.tensor(rtg[start_idx:start_idx+self.context_len])
-            timesteps = torch.tensor(timesteps[start_idx:start_idx+self.context_len])
+            timesteps = torch.arange(start=start_idx, end=start_idx + self.context_len, step=1)
             # trajectory mask
             mask = torch.ones(self.context_len, dtype=torch.long)
         else:
@@ -130,25 +130,21 @@ class CustomTrajDataset(Dataset):
             action = torch.cat((action, torch.zeros((padding_len, *action.shape[1:]))), dim = 0)
             rtg = torch.cat((rtg, torch.zeros((padding_len, *rtg.shape[1:]))), dim = 0)
 
-            timesteps = torch.cat((timesteps, torch.zeros((padding_len, *timesteps.shape[1:]))), dim = 0)
+            timesteps = torch.arange(start=0, end=self.context_len, step=1)
 
             # trajectory mask
             mask = torch.cat([torch.ones(data_len, dtype=torch.long), torch.zeros(padding_len, dtype=torch.long)], dim=0)
 
         """
-        Exepected output type and shape
+        Exepected output type
         state type:  torch.float32
         actions type:  torch.float32
         rtg type:  torch.float32
         timestep type:  torch.int64
         traj_mask type:  torch.int64
-        shape state: torch.Size([32, 30, 13])
-        shape rtg: torch.Size([32, 30, 1])
-        shape timestep: torch.Size([32, 30])
-        shape actions: torch.Size([32, 30, 2])
-        """
 
-        return state.float(), action.float(), rtg, timesteps, mask
+        """
+        return state.float(), action.float(), rtg.unsqueeze(-1).float(), timesteps.int(), mask.int()
 
 # create a combine dataset object from json files under a directory
 def get_combinedataset(path, context_len = 60, gamma = 0.8, rtg_scale = 100, device = "cpu"):
@@ -228,13 +224,16 @@ def init_training_object(dataset, batch_size = 32, shuffle=True, lr = 1e-4, wt_d
     return dataloader, model, optimizer, scheduler, scaler, model_params
 
 # custom training function which take in the model, dataset, optimizer, scheduler, scaler, n_epochs, min_scale
-def train_model(model, dataloader, optimizer, scheduler, scaler, n_epochs = 80, min_scale = 128, device = "cpu"):
+def train_model(model, dataloader, optimizer, scheduler, scaler, model_params, n_epochs = 80, min_scale = 128, device = "cpu"):
 
     # record the start time
     start_time = datetime.datetime.now()
 
     # define training parameters
     log_action_losses = []
+
+    # get action dimension from model_params
+    act_dim = model_params['act_dim']
 
     # train model
     for epoch in range(n_epochs):
@@ -302,7 +301,7 @@ def train_model(model, dataloader, optimizer, scheduler, scaler, n_epochs = 80, 
 def full_training_run(path = 'stock_trade_data', device = "cpu"):
     comb_dset, env_state = get_combinedataset(path = path, device = device)
     dataloader, model, optimizer, scheduler, scaler, model_params = init_training_object(comb_dset, device = device)
-    trained_model, log_action_loss = train_model(model, dataloader, optimizer, scheduler, scaler, device = device)
+    trained_model, log_action_loss = train_model(model, dataloader, optimizer, scheduler, scaler, model_params, device = device)
 
     plt.plot(log_action_loss)
     plt.xlabel('Epoch')

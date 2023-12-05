@@ -1,12 +1,14 @@
 # this script is used to create or load agent.
 
 from stable_baselines3 import PPO, A2C, DDPG
+from cust_transf import DecisionTransformer
 import numpy as np
-
+import json
+import torch
 
 # create a class for the agent, which is used to store either the stable-baselines agent, random sampling action space agent, or else
 class Agent:
-    def __init__(self, env, agent_type, model_path = None, algo = None):
+    def __init__(self, env, agent_type, model_path = None, algo = None, device = 'cpu', max_test_ep_len = 1000):
         self.env = env
         self.observation_space = env.observation_space
         self.action_space = env.action_space
@@ -19,6 +21,30 @@ class Agent:
                 self.agent = A2C.load(model_path, env=env)
             elif model_type == 'ddpg':
                 self.agent = DDPG.load(model_path, env=env)
+        elif agent_type == 'transformer':
+            # load model parameters from the model_path json file
+            with open(model_path, 'r') as f:
+                params = json.load(f)
+            
+            state_dim = params['state_dim']
+            act_dim = params['act_dim']
+            n_block = params['n_block']
+            h_dim = params['h_dim']
+            context_len = params['context_len']
+            n_heads = params['n_heads']
+            drop_p = params['drop_p']
+            model_dir = params['model_dir']
+
+            self.agent = DecisionTransformer(state_dim, act_dim, n_block, h_dim, context_len, n_heads, drop_p).to_device(device)
+            self.agent.load_state_dict(torch.load(model_dir))
+            eval_batch_size = 1
+
+            # zeros place holders
+            self.actions = torch.zeros((eval_batch_size, max_test_ep_len, act_dim), dtype=torch.float32, device=device)
+            self.states = torch.zeros((eval_batch_size, max_test_ep_len, state_dim), dtype=torch.float32, device=device)
+            self.rtg = torch.zeros((eval_batch_size, max_test_ep_len,1), dtype=torch.float32, device=device)
+            self.device = device
+
         elif agent_type == 'algo':
             self.agent = algo
         elif agent_type == 'random':
@@ -27,11 +53,28 @@ class Agent:
     def reset(self):
         if isinstance(self.agent, TradingAlgorithm):
             self.agent.reset()
+        elif isinstance(self.agent, DecisionTransformer):
+            self.actions = torch.zeros_like(self.actions)
+            self.states = torch.zeros_like(self.states)
+            self.rtg = torch.zeros_like(self.rtg)
     
-    def predict(self, state, deterministic=False):
+    def predict(self, state, timestep, deterministic=False):
         # if the agent is None, then return a random action
         if self.agent is None:
             return self.action_space.sample(), 0
+        elif isinstance(self.agent, DecisionTransformer):
+            self.agent.eval()
+            device = self.device
+            # add state in placeholder and normalize
+            self.states[0,timestep] = torch.tensor(state).to(device)
+            # get the state, reward, timestep, and action from the observation
+            state = state[:, :-1, :]
+            rtg = state[:, :, 0]
+            timestep = state[:, :, 1]
+            actions = state[:, :, 2]
+
+            # return the action from the stable-baselines agent
+            return action_pred, 0
         # if the agent is a TradingAlgorith, then return the action from the algorithm
         elif isinstance(self.agent, TradingAlgorithm):
             return self.agent.trade(state), 0

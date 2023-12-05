@@ -224,7 +224,7 @@ def init_training_object(dataset, batch_size = 32, shuffle=True, lr = 1e-4, wt_d
     return dataloader, model, optimizer, scheduler, scaler, model_params
 
 # custom training function which take in the model, dataset, optimizer, scheduler, scaler, n_epochs, min_scale
-def train_model(model, dataloader, optimizer, scheduler, scaler, model_params, n_epochs = 80, min_scale = 128, device = "cpu"):
+def train_model(model, dataloader, optimizer, scheduler, scaler, model_params, n_epochs = 100, min_scale = 128, device = "cpu"):
 
     # record the start time
     start_time = datetime.datetime.now()
@@ -298,10 +298,10 @@ def train_model(model, dataloader, optimizer, scheduler, scaler, model_params, n
     
     return model, log_action_losses
 
-def full_training_run(path = 'stock_trade_data', device = "cpu"):
+def full_training_run(path = 'stock_trade_data', device = "cpu", n_epochs = 100):
     comb_dset, env_state = get_combinedataset(path = path, device = device)
     dataloader, model, optimizer, scheduler, scaler, model_params = init_training_object(comb_dset, device = device)
-    trained_model, log_action_loss = train_model(model, dataloader, optimizer, scheduler, scaler, model_params, device = device)
+    trained_model, log_action_loss = train_model(model, dataloader, optimizer, scheduler, scaler, model_params, n_epochs, device = device)
 
     plt.plot(log_action_loss)
     plt.xlabel('Epoch')
@@ -319,6 +319,9 @@ def save_model(model, params, model_name, directory = 'trained_models'):
     if not os.path.exists(directory):
         os.makedirs(directory)
     torch.save(model.state_dict(), os.path.join(directory, model_name+'.pt'))
+
+    # add model directory to params
+    params['model_dir'] = os.path.join(directory, model_name+'.pt')
 
     # write model parameters to a json file
     with open(os.path.join(directory, model_name+'_params.json'), 'w') as f:

@@ -8,7 +8,7 @@ import torch
 
 # create a class for the agent, which is used to store either the stable-baselines agent, random sampling action space agent, or else
 class Agent:
-    def __init__(self, env, agent_type, model_path = None, algo = None, device = 'cpu', max_test_ep_len = 1000):
+    def __init__(self, env, agent_type, rtg_target=0, rtg_scale=0.75, model_path = None, algo = None, device = 'cpu', max_test_ep_len = 1000):
         self.env = env
         self.observation_space = env.observation_space
         self.action_space = env.action_space
@@ -28,14 +28,14 @@ class Agent:
             
             state_dim = params['state_dim']
             act_dim = params['act_dim']
-            n_block = params['n_block']
+            n_block = params['n_blocks']
             h_dim = params['h_dim']
-            context_len = params['context_len']
+            self.context_len = params['context_len']
             n_heads = params['n_heads']
             drop_p = params['drop_p']
             model_dir = params['model_dir']
 
-            self.agent = DecisionTransformer(state_dim, act_dim, n_block, h_dim, context_len, n_heads, drop_p).to_device(device)
+            self.agent = DecisionTransformer(state_dim, act_dim, n_block, h_dim, self.context_len, n_heads, drop_p)
             self.agent.load_state_dict(torch.load(model_dir))
             eval_batch_size = 1
 
@@ -44,6 +44,9 @@ class Agent:
             self.states = torch.zeros((eval_batch_size, max_test_ep_len, state_dim), dtype=torch.float32, device=device)
             self.rtg = torch.zeros((eval_batch_size, max_test_ep_len,1), dtype=torch.float32, device=device)
             self.device = device
+            self.rtg_target = rtg_target
+            self.rtg_scale = rtg_scale
+            self.running_rtg = rtg_target/rtg_scale
 
         elif agent_type == 'algo':
             self.agent = algo
@@ -57,27 +60,36 @@ class Agent:
             self.actions = torch.zeros_like(self.actions)
             self.states = torch.zeros_like(self.states)
             self.rtg = torch.zeros_like(self.rtg)
+            self.running_rtg = self.rtg_target/self.rtg_scale
     
-    def predict(self, state, timestep, deterministic=False):
+    def predict(self, state, timestep, running_award=0, deterministic=False):
         # if the agent is None, then return a random action
         if self.agent is None:
             return self.action_space.sample(), 0
+        
         elif isinstance(self.agent, DecisionTransformer):
             self.agent.eval()
             device = self.device
             # add state in placeholder and normalize
             self.states[0,timestep] = torch.tensor(state).to(device)
-            # get the state, reward, timestep, and action from the observation
-            state = state[:, :-1, :]
-            rtg = state[:, :, 0]
-            timestep = state[:, :, 1]
-            actions = state[:, :, 2]
-
-            # return the action from the stable-baselines agent
-            return action_pred, 0
+            # calculate running rtg and add to placeholder
+            self.running_rtg = self.running_rtg - (running_award/self.rtg_scale)
+            self.rtg[0,timestep] = self.running_rtg
+            if timestep < self.context_len:
+                # run forward pass to get action
+                _return_preds, state_preds, act_preds = self.agent(self.states[:,:timestep+1], self.rtg[:,:timestep+1], self.actions[:,:timestep+1])
+                action_pred = act_preds[0,timestep].detach()
+            else:
+                # run forward pass to get action
+                _return_preds, state_preds, act_preds = self.agent(self.states[:,timestep-self.context_len+1:timestep+1], self.rtg[:,timestep-self.context_len+1:timestep+1], self.actions[:,timestep-self.context_len+1:timestep+1])
+                action_pred = act_preds[0,-1].detach()
+            # return the action as cpu numpy array
+            return action_pred.cpu().numpy(), state_preds
+        
         # if the agent is a TradingAlgorith, then return the action from the algorithm
         elif isinstance(self.agent, TradingAlgorithm):
             return self.agent.trade(state), 0
+        
         # else, return the action from the stable-baselines agent
         else:
             return self.agent.predict(state, deterministic=deterministic)

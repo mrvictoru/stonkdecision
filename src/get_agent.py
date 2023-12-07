@@ -43,6 +43,11 @@ class Agent:
             self.actions = torch.zeros((eval_batch_size, max_test_ep_len, act_dim), dtype=torch.float32, device=device)
             self.states = torch.zeros((eval_batch_size, max_test_ep_len, state_dim), dtype=torch.float32, device=device)
             self.rtg = torch.zeros((eval_batch_size, max_test_ep_len,1), dtype=torch.float32, device=device)
+            
+            # same as timesteps used for training the transformer
+            self.timestep = torch.arange(start = 0, end = max_test_ep_len, step = 1)
+            self.timestep = self.timestep.repeat(eval_batch_size, 1).to(device)
+
             self.device = device
             self.rtg_target = rtg_target
             self.rtg_scale = rtg_scale
@@ -77,11 +82,11 @@ class Agent:
             self.rtg[0,timestep] = self.running_rtg
             if timestep < self.context_len:
                 # run forward pass to get action
-                _return_preds, state_preds, act_preds = self.agent(self.states[:,:timestep+1], self.rtg[:,:timestep+1], self.actions[:,:timestep+1])
+                _return_preds, state_preds, act_preds = self.agent.forward(self.states[:,:timestep+1], self.rtg[:,:timestep+1], self.timestep[:,:timestep+1], self.actions[:,:timestep+1])
                 action_pred = act_preds[0,timestep].detach()
             else:
                 # run forward pass to get action
-                _return_preds, state_preds, act_preds = self.agent(self.states[:,timestep-self.context_len+1:timestep+1], self.rtg[:,timestep-self.context_len+1:timestep+1], self.actions[:,timestep-self.context_len+1:timestep+1])
+                _return_preds, state_preds, act_preds = self.agent.forward(self.states[:,timestep-self.context_len+1:timestep+1], self.rtg[:,timestep-self.context_len+1:timestep+1], self.timestep[:,timestep-self.context_len+1:timestep+1],self.actions[:,timestep-self.context_len+1:timestep+1])
                 action_pred = act_preds[0,-1].detach()
             # return the action as cpu numpy array
             return action_pred.cpu().numpy(), state_preds

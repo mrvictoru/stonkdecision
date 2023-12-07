@@ -63,6 +63,7 @@ def run_env(agent, stock_name, env, num_episodes, date, normalize = False, deter
         state = env.reset()[0]
         dict['state'].append(state.tolist())
         timestep = 0
+        reward = 0
         done = False
         # use normalized state if normalize is True
         if normalize:
@@ -70,7 +71,7 @@ def run_env(agent, stock_name, env, num_episodes, date, normalize = False, deter
         # loop to sample action, next_state, reward, from the env
         while not done:
             # sample action
-            action, _states = agent.predict(state, deterministic)
+            action, _states = agent.predict(state, timestep, reward, deterministic)
             try:
                 next_state, reward, terminated, truncated, info = env.step(action)
             except Exception as e:

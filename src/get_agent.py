@@ -8,7 +8,7 @@ import torch
 
 # create a class for the agent, which is used to store either the stable-baselines agent, random sampling action space agent, or else
 class Agent:
-    def __init__(self, env, agent_type, rtg_target=0, rtg_scale=0.75, model_path = None, algo = None, device = 'cpu', max_test_ep_len = 1000):
+    def __init__(self, env, agent_type, rtg_target=100, rtg_scale=0.75, model_path = None, algo = None, device = 'cpu', max_test_ep_len = 1000):
         self.env = env
         self.observation_space = env.observation_space
         self.action_space = env.action_space

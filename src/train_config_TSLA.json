@@ -1,7 +1,7 @@
 {
     "stock_name": "TSLA",
-    "start_date": "2018-01-01",
-    "num_days": 1400,
+    "start_date": "2016-01-01",
+    "num_days": 1000,
     "interval": "1d",
     "indicators": ["Volume", "volume_cmf", "trend_macd", "momentum_rsi", "momentum_stoch_rsi", "trend_sma_fast"],
     "init_balance": 20000,

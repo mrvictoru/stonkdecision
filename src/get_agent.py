@@ -35,7 +35,7 @@ class Agent:
             drop_p = params['drop_p']
             model_dir = params['model_dir']
 
-            self.agent = DecisionTransformer(state_dim, act_dim, n_block, h_dim, self.context_len, n_heads, drop_p)
+            self.agent = DecisionTransformer(state_dim, act_dim, n_block, h_dim, self.context_len, n_heads, drop_p).to(device)
             self.agent.load_state_dict(torch.load(model_dir))
             eval_batch_size = 1
 
@@ -67,7 +67,7 @@ class Agent:
             self.rtg = torch.zeros_like(self.rtg)
             self.running_rtg = self.rtg_target/self.rtg_scale
     
-    def predict(self, state, timestep, running_award=0, deterministic=False):
+    def predict(self, state, t, running_award=0, deterministic=False):
         # if the agent is None, then return a random action
         if self.agent is None:
             return self.action_space.sample(), 0
@@ -76,19 +76,21 @@ class Agent:
             self.agent.eval()
             device = self.device
             # add state in placeholder and normalize
-            self.states[0,timestep] = torch.tensor(state).to(device)
+            self.states[0,t] = torch.tensor(state).to(device)
             # calculate running rtg and add to placeholder
             self.running_rtg = self.running_rtg - (running_award/self.rtg_scale)
-            self.rtg[0,timestep] = self.running_rtg
-            if timestep < self.context_len:
+            self.rtg[0,t] = self.running_rtg
+
+            if t < self.context_len:
                 # run forward pass to get action
-                _return_preds, state_preds, act_preds = self.agent.forward(self.states[:,:timestep+1], self.rtg[:,:timestep+1], self.timestep[:,:timestep+1], self.actions[:,:timestep+1])
-                action_pred = act_preds[0,timestep].detach()
+                _return_preds, state_preds, act_preds = self.agent.forward(self.states[:,:t+1], self.rtg[:,:t+1], self.timestep[:,:t+1], self.actions[:,:t+1])
+                action_pred = act_preds[0,t].detach()
             else:
                 # run forward pass to get action
-                _return_preds, state_preds, act_preds = self.agent.forward(self.states[:,timestep-self.context_len+1:timestep+1], self.rtg[:,timestep-self.context_len+1:timestep+1], self.timestep[:,timestep-self.context_len+1:timestep+1],self.actions[:,timestep-self.context_len+1:timestep+1])
+                _return_preds, state_preds, act_preds = self.agent.forward(self.states[:,t-self.context_len+1:t+1], self.rtg[:,t-self.context_len+1:t+1], self.timestep[:,t-self.context_len+1:t+1],self.actions[:,t-self.context_len+1:t+1])
                 action_pred = act_preds[0,-1].detach()
             # return the action as cpu numpy array
+            self.actions[0,t] = action_pred
             return action_pred.cpu().numpy(), state_preds
         
         # if the agent is a TradingAlgorith, then return the action from the algorithm

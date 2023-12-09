@@ -110,6 +110,7 @@ def save_data(data, file_name):
         json.dump(data, outfile)
 
 def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_range = [0.05, 0.3]):
+    print("num_episodes: ", num_episodes)
     # read the JSON file
     with open(json_file_path, 'r') as f:
         config = json.load(f)
@@ -145,7 +146,7 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
         agent = Agent(env, agent_type, agent_path)
         # run agent in env and collect data
         print("Running agent: ", agent_type)
-        data = run_env(agent, stock_name, env, num_episodes=200, date=env_date, normalize=True, deterministic=False)
+        data = run_env(agent, stock_name, env, num_episodes=num_episodes, date=env_date, normalize=True, deterministic=False)
         # save data
         print("Saving data to ", output_path)
         filename = os.path.join(output_path, agent_type+'_'+stock_name+'_'+start_date+'.json')

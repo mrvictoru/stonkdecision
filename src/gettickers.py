@@ -23,6 +23,16 @@ def get_sp500_tickers():
         tickers.append(ticker)
     return tickers
 
+def get_dow_tickers():
+    resp = requests.get('https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average')
+    soup = BeautifulSoup(resp.text, 'html.parser')
+    table = soup.find('table', {'class': 'wikitable sortable'})
+    tickers = []
+    for row in table.findAll('tr')[1:]:
+        ticker = row.findAll('td')[2].text.strip()
+        tickers.append(ticker)
+    return tickers
+
 """
 the following function will create json files in the format below for each stock in the list of tickers
 {

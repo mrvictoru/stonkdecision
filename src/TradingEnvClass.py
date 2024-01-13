@@ -20,7 +20,7 @@ VOLUME_CHART_HEIGHT = 0.33
 # ALPHA is the reward for networth going up
 ALPHA = 1
 # BETA is the penalty for buying stock with high cost basis
-BETA = 1
+BETA = 0.1
 # GAMMA is the penalty for selling stock when there is no stock held or buying stock when there is not enough balance
 GAMMA = 100
 
@@ -86,7 +86,7 @@ class StockTradingEnv(gym.Env):
     visualization = None
 
     # add another parameter normalize to determine whether to normalize the observation when return
-    def __init__(self, df, init_balance, max_step, render_mode = None, random=False, normalize=False):
+    def __init__(self, df, init_balance, max_step, transaction_cost_pct=0.001,render_mode = None, random=False, normalize=False):
         super(StockTradingEnv, self).__init__()
         self.render_mode = render_mode
         self.normalize = normalize
@@ -98,6 +98,7 @@ class StockTradingEnv(gym.Env):
         self.init_balance = init_balance
         self.max_step = max_step
         self.random = random
+        self.transaction_cost_pct = transaction_cost_pct
         # turn the columns into a list
         self.columns = self.df.columns.tolist()
         print("init env with max step: ", self.max_step)
@@ -211,10 +212,10 @@ class StockTradingEnv(gym.Env):
             reward = reward_costbasis + reward_inappropriate
         else:
             reward_networth = (self.net_worth - self.net_worths[-2])  * delay_modifier * ALPHA
-            reward_balance = (self.balance - self.balance_history[-2]) * delay_modifier * ALPHA
+            #reward_balance = (self.balance - self.balance_history[-2]) * delay_modifier * ALPHA
             reward_costbasis = - self.cost_basis * BETA
             reward_inappropriate = - action_taken[2] * GAMMA
-            reward = reward_networth + reward_balance + reward_costbasis + reward_inappropriate
+            reward = reward_networth + reward_costbasis + reward_inappropriate
         
         # if net_worth is below 0, or current_step is greater than max_step, then environment terminates
         truncated = (self.current_step >= self.max_step)
@@ -252,6 +253,7 @@ class StockTradingEnv(gym.Env):
 
             prev_cost = self.cost_basis * self.shares_held
             additional_cost = shares_bought * execute_price
+            transaction_cost = additional_cost * self.transaction_cost_pct
             
             # remove safeguard to allow buying with negative balance
             """
@@ -260,7 +262,7 @@ class StockTradingEnv(gym.Env):
                 additional_cost = 0
             """
 
-            self.balance -= additional_cost
+            self.balance -= additional_cost + transaction_cost
             # calculate the new cost basis, check if it is divide by zero, if it is then set it to the execute price
             if self.shares_held + shares_bought == 0:
                 self.cost_basis = execute_price
@@ -286,6 +288,8 @@ class StockTradingEnv(gym.Env):
             elif self.shares_held == 0:
                 shares_sold = 0
             self.balance += shares_sold * execute_price
+            transaction_cost = shares_sold * execute_price * self.transaction_cost_pct
+            self.balance -= transaction_cost
             self.shares_held -= shares_sold
             self.total_shares_sold += shares_sold
             self.total_sales_value += shares_sold * execute_price

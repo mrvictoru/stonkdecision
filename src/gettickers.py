@@ -2,6 +2,7 @@ import datetime as dt
 import polars as pl
 import requests
 from bs4 import BeautifulSoup
+import os
 
 def get_nasdaq_tickers():
     url = 'https://api.nasdaq.com/api/quote/list-type/nasdaq100'
@@ -48,6 +49,8 @@ the following function will create json files in the format below for each stock
 
 def create_json_files(tickers, start_date, num_days, interval, indicators, init_balance, output_path, json_path):
     for ticker in tickers:
+        # change output path to ticker name with output path
+        new_output_path = os.path.join(output_path, ticker)
         json_file = {
             "stock_name": ticker,
             "start_date": start_date,
@@ -55,7 +58,7 @@ def create_json_files(tickers, start_date, num_days, interval, indicators, init_
             "interval": interval,
             "indicators": indicators,
             "init_balance": init_balance,
-            "output_path": output_path
+            "output_path": new_output_path
         }
         # create json file and save it under json_path
         with open(f'train_config_{ticker}.json', 'w') as f:

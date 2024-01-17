@@ -60,6 +60,11 @@ def create_json_files(tickers, start_date, num_days, interval, indicators, init_
             "init_balance": init_balance,
             "output_path": new_output_path
         }
-        # create json file and save it under json_path
-        with open(f'train_config_{ticker}.json', 'w') as f:
+        # Check if the directory exists
+        if not os.path.exists(json_path):
+            # If not, create the directory
+            os.makedirs(json_path)
+
+        # Now you can safely write your file
+        with open(os.path.join(json_path, f'training_config_{ticker}.json'), 'w') as f:
             f.write(str(json_file))

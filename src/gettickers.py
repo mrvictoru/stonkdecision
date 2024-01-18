@@ -3,6 +3,7 @@ import polars as pl
 import requests
 from bs4 import BeautifulSoup
 import os
+import json
 
 def get_nasdaq_tickers():
     url = 'https://api.nasdaq.com/api/quote/list-type/nasdaq100'
@@ -67,4 +68,4 @@ def create_json_files(tickers, start_date, num_days, interval, indicators, init_
 
         # Now you can safely write your file
         with open(os.path.join(json_path, f'training_config_{ticker}.json'), 'w') as f:
-            f.write(str(json_file))
+            json.dump(json_file, f)

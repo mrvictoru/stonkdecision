@@ -97,7 +97,7 @@ def full_run(json_file_path):
         _,_ = evaluate_stable_agent(trained_model, stable_env, 5)
         match = re.search(r"\.(\w+)\.", str(model))
         if match:
-            name = match.group(1)
+            name = match.group(1)+"_trained_"+stock_name
         # join path and name
         path = os.path.join(output_path, name)
         output_stable_agent(trained_model,path)

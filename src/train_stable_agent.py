@@ -93,7 +93,7 @@ def full_run(json_file_path):
         _,_ = evaluate_stable_agent(model, stable_env, 5)
     
     for model in model_list:
-        trained_model = train_stable_agent(model, len(data)*200)
+        trained_model = train_stable_agent(model, len(data)*80)
         _,_ = evaluate_stable_agent(trained_model, stable_env, 5)
         match = re.search(r"\.(\w+)\.", str(model))
         if match:

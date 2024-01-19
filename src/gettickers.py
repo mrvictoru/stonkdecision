@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import json
+import re
 
 def get_nasdaq_tickers():
     url = 'https://api.nasdaq.com/api/quote/list-type/nasdaq100'
@@ -15,6 +16,34 @@ def get_nasdaq_tickers():
     tickers = [data['symbol'] for data in main_data]
     return tickers
 
+def get_dow_tickers():
+  url = "https://www.cnbc.com/dow-components/"
+  # send a GET request to the url
+  response = requests.get(url)
+  # check if the response is successful
+  if response.status_code == 200:
+    # parse the HTML content using BeautifulSoup
+    soup = BeautifulSoup(response.content, "html.parser")
+    # find all the elements that contain the ticker symbols
+    elements = soup.find_all("a", class_="quote")
+    # create an empty list to store the tickers
+    tickers = []
+    # loop through the elements
+    for element in elements:
+      # get the text of the element
+      text = element.get_text()
+      # use a regular expression to extract the ticker symbol
+      match = re.search(r"\((\w+)\)", text)
+      # if a match is found, append the ticker to the list
+      if match:
+        ticker = match.group(1)
+        tickers.append(ticker)
+    # return the list of tickers
+    return tickers
+  else:
+    # return an empty list if the response is not successful
+    return []
+
 def get_sp500_tickers():
     resp = requests.get('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
     soup = BeautifulSoup(resp.text, 'html.parser')
@@ -25,15 +54,8 @@ def get_sp500_tickers():
         tickers.append(ticker)
     return tickers
 
-def get_dow_tickers():
-    resp = requests.get('https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average')
-    soup = BeautifulSoup(resp.text, 'html.parser')
-    table = soup.find('table', {'class': 'wikitable sortable'})
-    tickers = []
-    for row in table.findAll('tr')[1:]:
-        ticker = row.findAll('td')[2].text.strip()
-        tickers.append(ticker)
-    return tickers
+
+
 
 """
 the following function will create json files in the format below for each stock in the list of tickers

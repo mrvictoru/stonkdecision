@@ -12,3 +12,5 @@ datasets
 tqdm
 mplfinance
 matplotlib
+lumibot
+alpaca-trade-api

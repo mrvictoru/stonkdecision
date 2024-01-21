@@ -1,6 +1,11 @@
 import yfinance as yf
 import pandas as pd
 import ta
+import alpaca_trade_api as tradeapi
+import json
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch
+
 
 # the following code is used to get stock data
 def to_numeric_and_downcast_data(df: pd.DataFrame):
@@ -81,3 +86,47 @@ def get_stock_data_yf_between_with_indicators(stock_name, start_date, end_date, 
             if col not in indicators and col not in ['Open', 'High', 'Low', 'Close']:
                 data = data.drop(col, axis=1)
     return data
+
+def get_api_key():
+    # read json file for api key
+    with open('api_key.json') as f:
+        data = json.load(f)
+    return data['api_key'], data['secret_key'], data['base_url']
+
+def get_newsheadline_sentiment(stock_name, start_date, end_date, device, tokenizer, model):
+
+    api_key, secret_key, base_url = get_api_key()
+    # get news using alpaca api
+    api = tradeapi.REST(
+        api_key,
+        secret_key,
+        base_url,
+        api_version='v2'
+    )
+    news = api.get_news(stock_name, start_date, end_date)
+    # get the headline of the news
+    news= [ev.__dict__["_raw"]["headline"] for ev in news]
+    tokens = tokenizer(news, padding = True, return_tensors="pt").to(device)
+    result = model(tokens["input_ids"], attention_mask=tokens["attention_mask"])["logits"]
+    result = torch.nn.functional.softmax(torch.sum(result, 0), dim = -1)
+    probability = result[torch.argmax(result)]
+    sentiment = torch.argmax(result)
+    return probability, sentiment
+
+
+# helper function that get stock data between two dates as well as the technical indicators and news sentiment
+def get_stock_data_yf_between_with_indicators_news(stock_name, start_date, end_date, interval, indicators=['all']) -> pd.DataFrame:
+    data = yf.download(stock_name, start=start_date, end=end_date, interval=interval)
+    data = to_numeric_and_downcast_data(data)
+    data = ta.add_all_ta_features(data, open="Open", high="High", low="Low", close="Close", volume="Volume", fillna=True)
+    # check if indicators is not all
+    if not(indicators[0] == 'all'):
+        # remove columns that is not in the indicators
+        for col in data.columns:
+            if col not in indicators and col not in ['Open', 'High', 'Low', 'Close']:
+                data = data.drop(col, axis=1)
+
+    # set up tokenizer and model for sentiment analysis
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
+    model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert").to(device)

@@ -130,3 +130,5 @@ def get_stock_data_yf_between_with_indicators_news(stock_name, start_date, end_d
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
     model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert").to(device)
+
+    # create new columns for news sentiment and probability

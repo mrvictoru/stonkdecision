@@ -104,14 +104,17 @@ def get_newsheadline_sentiment(stock_name, start_date, end_date, device, tokeniz
         api_version='v2'
     )
     news = api.get_news(stock_name, start_date, end_date)
+    print("type: ", type(news))
+
     # get the headline of the news
     news= [ev.__dict__["_raw"]["headline"] for ev in news]
+    print("length: ", len(news))
     tokens = tokenizer(news, padding = True, return_tensors="pt").to(device)
     result = model(tokens["input_ids"], attention_mask=tokens["attention_mask"])["logits"]
     result = torch.nn.functional.softmax(torch.sum(result, 0), dim = -1)
-    probability = result[torch.argmax(result)]
-    sentiment = torch.argmax(result)
-    return probability, sentiment
+    #probability = result[torch.argmax(result)]
+    #sentiment = torch.argmax(result)
+    return result
 
 
 # helper function that get stock data between two dates as well as the technical indicators and news sentiment

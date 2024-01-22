@@ -1,3 +1,5 @@
+lumibot
+alpaca-trade-api
 jupyter
 numpy
 pandas
@@ -9,8 +11,8 @@ yfinance
 imageio
 ta
 datasets
+transformers
 tqdm
 mplfinance
 matplotlib
-lumibot
-alpaca-trade-api
+

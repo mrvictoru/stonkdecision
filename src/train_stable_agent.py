@@ -88,16 +88,25 @@ def full_run(json_file_path):
     
     model_list = create_stable_agents(stable_env)
 
-    print("Evaluate pre training model")
     for model in model_list:
-        _,_ = evaluate_stable_agent(model, stable_env, 5)
-    
-    for model in model_list:
+        print("Evaluate pre training model: ", model)
+        pre_mean_reward, pre_std_reward = evaluate_stable_agent(model, stable_env, 5)
+        print("Train model: ", model)
         trained_model = train_stable_agent(model, len(data)*80)
-        _,_ = evaluate_stable_agent(trained_model, stable_env, 5)
+        print("Evaluate post training model: ", model)
+        post_mean_reward, pre_std_reward = evaluate_stable_agent(trained_model, stable_env, 5)
+
+        # check comparison of pre and post training by calculating the coharn's d
+        coharns_d = (pre_mean_reward - post_mean_reward) / numpy.sqrt((pre_std_reward**2 + pre_std_reward**2)/2)
+        print("coharn's d: ", coharns_d)
+
         match = re.search(r"\.(\w+)\.", str(model))
         if match:
-            name = match.group(1)+"_trained_"+stock_name
+            if coharns_d > 0.65:
+                name = match.group(1)+"_trained_"+stock_name+"_good"
+            else:
+                name = match.group(1)+"_trained_"+stock_name+"_bad"
+
         # join path and name
         path = os.path.join(output_path, name)
         output_stable_agent(trained_model,path)

@@ -1,7 +1,7 @@
 import yfinance as yf
 import pandas as pd
 import ta
-from alpaca_trade_api import REST
+from alpaca_trade_api.rest import REST
 import json
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
@@ -93,6 +93,17 @@ def get_api_key():
         data = json.load(f)
     return data['api_key'], data['secret_key'], data['base_url']
 
+def test():
+    api_key, secret_key, base_url = get_api_key()
+    api = REST(
+        api_key,
+        secret_key,
+        base_url
+    )
+    testdf = api.get_quotes("AAPL", "2021-06-08", "2021-06-08", limit=10).df
+    print(testdf)
+    
+
 def get_newsheadline_sentiment(stock_name, start_date, end_date, device, tokenizer, model):
 
     api_key, secret_key, base_url = get_api_key()
@@ -100,8 +111,7 @@ def get_newsheadline_sentiment(stock_name, start_date, end_date, device, tokeniz
     api = REST(
         api_key,
         secret_key,
-        base_url,
-        api_version='v1'
+        base_url
     )
     news = api.get_news(symbol = stock_name, start = start_date, end = end_date)
     print("type: ", type(news))

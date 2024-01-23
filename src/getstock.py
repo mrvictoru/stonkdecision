@@ -1,7 +1,7 @@
 import yfinance as yf
 import pandas as pd
 import ta
-import alpaca_trade_api as tradeapi
+from alpaca_trade_api import REST
 import json
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
@@ -97,13 +97,13 @@ def get_newsheadline_sentiment(stock_name, start_date, end_date, device, tokeniz
 
     api_key, secret_key, base_url = get_api_key()
     # get news using alpaca api
-    api = tradeapi.REST(
+    api = REST(
         api_key,
         secret_key,
         base_url,
-        api_version='v2'
+        api_version='v1'
     )
-    news = api.get_news(stock_name, start_date, end_date)
+    news = api.get_news(symbol = stock_name, start = start_date, end = end_date)
     print("type: ", type(news))
 
     # get the headline of the news

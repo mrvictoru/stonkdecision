@@ -1,10 +1,11 @@
 import yfinance as yf
 import pandas as pd
 import ta
-from alpaca_trade_api.rest import REST
+import requests
 import json
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
+import datetime as dt
 
 
 # the following code is used to get stock data
@@ -93,37 +94,47 @@ def get_api_key():
         data = json.load(f)
     return data['api_key'], data['secret_key'], data['base_url']
 
-def test():
+def has_dollar_symbol(lst:list):
+    for element in lst:
+        if "$" in element or "USD" in element:
+            return True
+    return False
+  
+
+def get_newsheadline_sentiment(stock_name:str, start_date:dt.datetime, end_date:dt.datetime, device, tokenizer, model):
+
+    # get api key
     api_key, secret_key, base_url = get_api_key()
-    api = REST(
-        api_key,
-        secret_key,
-        base_url
-    )
-    testdf = api.get_quotes("AAPL", "2021-06-08", "2021-06-08", limit=10).df
-    print(testdf)
+
+    # convert start_date and end_date to string YYYY-MM-DD
+    start_date = start_date.strftime('%Y-%m-%d')
+    end_date = end_date.strftime('%Y-%m-%d')
+    url = f"https://data.alpaca.markets/v1beta1/news?start={start_date}&end={end_date}&sort=desc&symbols={stock_name}&exclude_contentless=true"
+
+    headers = {
+        "accept": "application/json",
+        "APCA-API-KEY-ID": api_key,
+        "APCA-API-SECRET-KEY": secret_key
+    }
     
+    # use requests to get news from alpaca api
 
-def get_newsheadline_sentiment(stock_name, start_date, end_date, device, tokenizer, model):
+    response = requests.get(url, headers=headers)
+    # check if response is successful
+    if response.status_code != 200:
+        print("Error: ", response.status_code)
+        return None
+    else:
+        newslist = response.json()['news']
 
-    api_key, secret_key, base_url = get_api_key()
-    # get news using alpaca api
-    api = REST(
-        api_key,
-        secret_key,
-        base_url
-    )
-    news = api.get_news(symbol = stock_name, start = start_date, end = end_date)
-    print("type: ", type(news))
-
-    # get the headline of the news
-    news= [ev.__dict__["_raw"]["headline"] for ev in news]
-    print("length: ", len(news))
+    news = [lst for lst in newslist if not has_dollar_symbol(lst['symbols'])]
+    
+    news= [ev["summary"] for ev in news]
     tokens = tokenizer(news, padding = True, return_tensors="pt").to(device)
     result = model(tokens["input_ids"], attention_mask=tokens["attention_mask"])["logits"]
     result = torch.nn.functional.softmax(torch.sum(result, 0), dim = -1)
-    #probability = result[torch.argmax(result)]
-    #sentiment = torch.argmax(result)
+    # turn the result into a list
+    result = result.tolist()
     return result
 
 

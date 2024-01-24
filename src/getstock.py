@@ -154,5 +154,19 @@ def get_stock_data_yf_between_with_indicators_news(stock_name, start_date, end_d
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
     model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert").to(device)
+    
+    # create 3 new columns (positive, negative ,neutral) for news sentiment and probability
+    data['positive'] = 0
+    data['negative'] = 0
+    data['neutral'] = 0
 
-    # create new columns for news sentiment and probability
+    # loop through each timestep and get the news sentiment between that day and previous 4 days
+    for i in range(4, len(data)):
+        # get the news sentiment
+        result = get_newsheadline_sentiment(stock_name, data.index[i-4], data.index[i], device, tokenizer, model)
+        if result is None:
+            result = [0,0,0]
+        # update the news sentiment for that day
+        data['positive'].iloc[i] = result[0]
+        data['negative'].iloc[i] = result[1]
+        data['neutral'].iloc[i] = result[2]

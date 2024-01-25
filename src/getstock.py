@@ -161,7 +161,7 @@ def get_stock_data_yf_between_with_indicators_news(stock_name, start_date, end_d
     data['neutral'] = 0
 
     # loop through each timestep and get the news sentiment between that day and previous 4 days
-    for i in range(4, len(data)):
+    for i in range(len(data)):
         # get the news sentiment
         result = get_newsheadline_sentiment(stock_name, data.index[i-4], data.index[i], device, tokenizer, model)
         if result is None:
@@ -170,3 +170,5 @@ def get_stock_data_yf_between_with_indicators_news(stock_name, start_date, end_d
         data['positive'].iloc[i] = result[0]
         data['negative'].iloc[i] = result[1]
         data['neutral'].iloc[i] = result[2]
+    
+    return data

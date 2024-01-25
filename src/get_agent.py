@@ -209,7 +209,31 @@ class TradingAlgorithm:
             self.sold = False
             # return a random number between 0.2 and -0.2 as the confidence and action
             return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
-
+        
+        elif self.type == 'sentiment_react':
+            # get the column index of the sentiment indicators (positive, negative, neutral)
+            sentiment = [state[-3], state[-2], state[-1]]
+            # come up with a strategy to trade based on the sentiment indicators
+            # if the neutral sentiment is above 0.9, then hold the current position
+            if sentiment[2] > 0.9:
+                self.bought = False
+                self.sold = False
+                return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
+            # if the positive sentiment is above 0.8, then buy the stock
+            elif sentiment[0] > 0.8:
+                self.bought = True
+                self.sold = False
+                return np.array([np.random.uniform(0.7, 1), np.random.uniform(self.amount_range[0], self.amount_range[1])])
+            # if the negative sentiment is above 0.8, then sell the stock
+            elif sentiment[1] > 0.8:
+                self.bought = False
+                self.sold = True
+                return np.array([np.random.uniform(-1, -0.7), np.random.uniform(self.amount_range[0], self.amount_range[1])])
+            # else, hold the current position
+            else:
+                self.bought = False
+                self.sold = False
+                return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
 
 
 # the following helper functions are used to calculate the confidence of the action based on the momentum_stoch_rsi indicator        

@@ -165,7 +165,7 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     print("Running momentum algo agents")
     momentum_algo = 'momentum_stoch_rsi'
     # find the momentum_stoch_rsi column
-    momentum_stoch_rsi_col = col.index('momentum_stoch_rsi')
+    momentum_stoch_rsi_col = col.index(momentum_algo)
     print("momentum_stoch_rsi_col: ", momentum_stoch_rsi_col)
     momentum_trade_algo = TradingAlgorithm(algo_type = momentum_algo, indicator_column = momentum_stoch_rsi_col, amount_range = trade_range)
     momentum_algo_agent = Agent(env, 'algo', algo = momentum_trade_algo)
@@ -178,7 +178,7 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     print("Running trend sma fast algo agents")
     trend_sma_fast_algo = 'trend_sma_fast'
     # find the trend_sma_fast column
-    trend_sma_fast_col = col.index('trend_sma_fast')
+    trend_sma_fast_col = col.index(trend_sma_fast_algo)
     print("trend_sma_fast_col: ", trend_sma_fast_col)
     trend_sma_fast_trade_algo = TradingAlgorithm(algo_type = trend_sma_fast_algo, indicator_column = trend_sma_fast_col, amount_range = trade_range)
     trend_sma_fast_algo_agent = Agent(env, 'algo', algo = trend_sma_fast_trade_algo)
@@ -187,6 +187,12 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     print("Saving data to ", output_path)
     filename = os.path.join(output_path, trend_sma_fast_algo+'_'+stock_name+'_'+start_date+'.json')
     save_data(data, filename)
+
+    print("Running sentiment react agents")
+    sentiment_react_algo = 'sentiment_react'
+    sentiment_react_trade_algo = TradingAlgorithm(algo_type = sentiment_react_algo, indicator_column = None, amount_range = trade_range)
+    sentiment_ractt_algo_agent = Agent(env, 'algo', algo = sentiment_react_algo)
+    data = run_env(sentiment_ractt_algo_agent, stock_name, env, num_episodes, env_date, normalize = False)
 
 def evaluate_data(data_path):
     # read the json file from data_path

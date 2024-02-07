@@ -233,7 +233,7 @@ class TradingAlgorithm:
             else:
                 self.bought = False
                 self.sold = False
-                return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
+                return np.array([np.random.uniform(-0.3, 0.3), np.random.uniform(self.amount_range[0], self.amount_range[1])])
 
 
 # the following helper functions are used to calculate the confidence of the action based on the momentum_stoch_rsi indicator        

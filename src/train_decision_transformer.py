@@ -163,24 +163,31 @@ def get_combinedataset(path, context_len = 60, gamma = 0.8, rtg_scale = 100, dev
     # create dataset objects from json files
     datasets = []
     env_states = []
+    print("opening files and creating datasets")
     for file in files:
         with open(file, 'r') as f:
             env_states.append(json.load(f)['env_state'])
         dataset = CustomTrajDataset(file, context_len, gamma, rtg_scale, device)
         print(f"{file} has {len(dataset)} trajectories")
         datasets.append(dataset)
-    
+
+    print("checking for env_state consistency")
     # check if all env_states are the same
     if not all(env_state == env_states[0] for env_state in env_states):
         print("Not all env_states are the same in the datasets")
         raise ValueError("All env_states must be the same")
+    else:
+        print("All env_states are the same in the datasets")
     
+    print("Combining datasets")
     # combine the datasets
     combinedataset = torch.utils.data.ConcatDataset(datasets)
     print(f"Combined dataset has {len(combinedataset)} trajectories")
     return combinedataset, env_state
+   
 
 def init_training_object(dataset, batch_size = 32, shuffle=True, lr = 1e-4, wt_decay = 1e-4, eps = 1e-6, warmup_steps = 1e5, growth_interval = 150 , context_len = 60, hp_scale = 2, drop_p = 0.2, device = "cpu"):
+    print("Initializing training object")
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
     # define model parameters
@@ -220,12 +227,12 @@ def init_training_object(dataset, batch_size = 32, shuffle=True, lr = 1e-4, wt_d
      'n_heads': n_heads,
      'drop_p': drop_p,
     }
-
+    print("Training object initialized")
     return dataloader, model, optimizer, scheduler, scaler, model_params
 
 # custom training function which take in the model, dataset, optimizer, scheduler, scaler, n_epochs, min_scale
 def train_model(model, dataloader, optimizer, scheduler, scaler, model_params, n_epochs = 100, min_scale = 128, device = "cpu"):
-
+    print("Training model...")
     # record the start time
     start_time = datetime.datetime.now()
 
@@ -295,10 +302,16 @@ def train_model(model, dataloader, optimizer, scheduler, scaler, model_params, n
     # record the end time
     end_time = datetime.datetime.now()
     print(f'Training time: {end_time - start_time}')
-    
+    print("Training complete")
     return model, log_action_losses
 
 def full_training_run(path = 'stock_trade_data', device = "cpu", n_epochs = 100):
+    # check if the path exists and does it contain subfolder
+    if not os.path.exists(path):
+        raise ValueError(f"Path {path} does not exist")
+    elif not os.path.isdir(path):
+        raise ValueError(f"Path {path} is not a directory")
+
     comb_dset, env_state = get_combinedataset(path = path, device = device)
     dataloader, model, optimizer, scheduler, scaler, model_params = init_training_object(comb_dset, device = device)
     trained_model, log_action_loss = train_model(model, dataloader, optimizer, scheduler, scaler, model_params, n_epochs, device = device)

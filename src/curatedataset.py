@@ -3,7 +3,7 @@
 # first group of functions are to get stock data
 
 # import helper functions for getting stock data
-from getstock import get_stock_data_yf_between_with_indicators
+from getstock import get_stock_data_yf_between_with_indicators_news
 # import datatime library
 from datetime import datetime, timedelta
 
@@ -28,7 +28,7 @@ def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volum
     except ValueError:
         raise ValueError("Incorrect data format, should be YYYY-MM-DD")
         
-    stock_data = get_stock_data_yf_between_with_indicators(stock_name, start_date, end_date, interval, indicators)
+    stock_data = get_stock_data_yf_between_with_indicators_news(stock_name, start_date, end_date, interval, indicators)
     # check if momentum_stoch_rsi is in the indicators
     if 'momentum_stoch_rsi' in indicators:
         # if so then change the first 10 rows of momentum_stoch_rsi to 0.5

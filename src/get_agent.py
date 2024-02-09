@@ -212,7 +212,7 @@ class TradingAlgorithm:
         
         elif self.type == 'sentiment_react':
             # get the column index of the sentiment indicators (positive, negative, neutral)
-            sentiment = [state[-3], state[-2], state[-1]]
+            sentiment = [state[self.indicator_column[0]], state[self.indicator_column[1]], self.indicator_column[2]]
             # come up with a strategy to trade based on the sentiment indicators
             # if the neutral sentiment is above 0.9, then hold the current position
             if sentiment[2] > 0.9:

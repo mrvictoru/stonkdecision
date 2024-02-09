@@ -190,7 +190,10 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
 
     print("Running sentiment react agents")
     sentiment_react_algo = 'sentiment_react'
-    sentiment_react_trade_algo = TradingAlgorithm(algo_type = sentiment_react_algo, indicator_column = None, amount_range = trade_range)
+    sentiment_posi_col = col.index('positive')
+    sentiment_neg_col = col.index('negative')
+    sentiment_neu_col = col.index('neutral')
+    sentiment_react_trade_algo = TradingAlgorithm(algo_type = sentiment_react_algo, indicator_column = [sentiment_posi_col, sentiment_neg_col, sentiment_neu_col], amount_range = trade_range)
     sentiment_react_algo_agent = Agent(env, 'algo', algo = sentiment_react_trade_algo)
     data = run_env(sentiment_react_algo_agent, stock_name, env, num_episodes, env_date, normalize = False)
     # save data

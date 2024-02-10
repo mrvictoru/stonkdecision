@@ -59,6 +59,7 @@ def output_stable_agent(model, path):
 # it will train the agent and save it in a folder with the stock_name
 def full_run(json_file_path):
     # read the JSON file
+    print("Reading JSON file: ", json_file_path)
     with open(json_file_path, 'r') as f:
         config = json.load(f)
 
@@ -77,8 +78,10 @@ def full_run(json_file_path):
         os.makedirs(output_path)
     
     # create the trading environment
-    stable_env, obs_space, act_space, col, data = makegymenv(stock_name, start_date, num_days, interval, indicators=indicators, normalize=True, init_balance=init_balance)
+    print(f"Creating trading environment with {stock_name} data")
+    stable_env, obs_space, act_space, col, data = makegymenv(stock_name=stock_name, start_date=start_date, period=num_days, interval=interval, indicators=indicators, normalize=True, init_balance=init_balance)
 
+    print("Checking environment")
     try:
         check_env(stable_env)
     except Exception as e:

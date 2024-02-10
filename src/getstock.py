@@ -140,16 +140,19 @@ def get_newsheadline_sentiment(stock_name:str, start_date:dt.datetime, end_date:
 
 # helper function that get stock data between two dates as well as the technical indicators and news sentiment
 def get_stock_data_yf_between_with_indicators_news(stock_name, start_date, end_date, interval, indicators=['all']) -> pd.DataFrame:
+    print(f"Getting stock data of {stock_name}...")
     data = yf.download(stock_name, start=start_date, end=end_date, interval=interval)
     data = to_numeric_and_downcast_data(data)
     data = ta.add_all_ta_features(data, open="Open", high="High", low="Low", close="Close", volume="Volume", fillna=True)
     # check if indicators is not all
     if not(indicators[0] == 'all'):
+        print("sorting indicators...")
         # remove columns that is not in the indicators
         for col in data.columns:
             if col not in indicators and col not in ['Open', 'High', 'Low', 'Close']:
                 data = data.drop(col, axis=1)
 
+    print("setting up sentiment analysis model...")
     # set up tokenizer and model for sentiment analysis
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
@@ -159,16 +162,21 @@ def get_stock_data_yf_between_with_indicators_news(stock_name, start_date, end_d
     data['positive'] = 0
     data['negative'] = 0
     data['neutral'] = 0
-
+    
+    print(f"Getting news sentiment of {stock_name}...")
     # loop through each timestep and get the news sentiment between that day and previous 4 days
     for i in range(len(data)):
         # get the news sentiment
-        result = get_newsheadline_sentiment(stock_name, data.index[i-4], data.index[i], device, tokenizer, model)
+        try:
+            result = get_newsheadline_sentiment(stock_name, data.index[i-4], data.index[i], device, tokenizer, model)
+        except Exception as e:
+            print("Error: ", e)
+            result = None
         if result is None:
             result = [0,0,0]
         # update the news sentiment for that day
         data['positive'].iloc[i] = result[0]
         data['negative'].iloc[i] = result[1]
         data['neutral'].iloc[i] = result[2]
-    
+    print(f"Getting stock data of {stock_name} completed.")
     return data

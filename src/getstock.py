@@ -175,8 +175,8 @@ def get_stock_data_yf_between_with_indicators_news(stock_name, start_date, end_d
         if result is None:
             result = [0,0,0]
         # update the news sentiment for that day
-        data['positive'].iloc[i] = result[0]
-        data['negative'].iloc[i] = result[1]
-        data['neutral'].iloc[i] = result[2]
+        data.loc[i, 'positive'] = result[0]
+        data.loc[i, 'negative'] = result[1]
+        data.loc[i, 'neutral'] = result[2]
     print(f"Getting stock data of {stock_name} completed.")
     return data

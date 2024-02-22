@@ -159,9 +159,9 @@ def get_stock_data_yf_between_with_indicators_news(stock_name, start_date, end_d
     model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert").to(device)
     
     # create 3 new columns (positive, negative ,neutral) for news sentiment and probability
-    data['positive'] = 0
-    data['negative'] = 0
-    data['neutral'] = 0
+    data['positive'] = 0.0
+    data['negative'] = 0.0
+    data['neutral'] = 0.0
     
     print(f"Getting news sentiment of {stock_name}...")
     # loop through each timestep and get the news sentiment between that day and previous 4 days
@@ -173,10 +173,10 @@ def get_stock_data_yf_between_with_indicators_news(stock_name, start_date, end_d
             print("Error: ", e)
             result = None
         if result is None:
-            result = [0,0,0]
+            result = [0.0,0.0,0.0]
         # update the news sentiment for that day
-        data.loc[data.index[i], 'positive'] = result[0]
-        data.loc[data.index[i], 'negative'] = result[1]
-        data.loc[data.index[i], 'neutral'] = result[2]
+        data.loc[data.index[i], 'positive'] = float(result[0])
+        data.loc[data.index[i], 'negative'] = float(result[1])
+        data.loc[data.index[i], 'neutral'] = float(result[2])
     print(f"Getting stock data of {stock_name} completed.")
     return data

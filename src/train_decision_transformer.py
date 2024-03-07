@@ -270,7 +270,13 @@ def train_model(model, dataloader, optimizer, scheduler, scaler, model_params, n
 
                 # calculate losses just for actions
                 loss = F.mse_loss(act_preds, action_targets, reduction='mean')
-
+            
+            # check if act_preds or loss contains NaNs
+            if torch.isnan(loss).any():
+                print(f"Loss contains NaNs at epoch {epoch}")
+            if torch.isnan(act_preds).any():
+                print(f"act_preds contains NaNs at epoch {epoch}")
+            
             # Scales loss.  Calls backward() on scaled loss to create scaled gradients.
             scaler.scale(loss).backward()
 

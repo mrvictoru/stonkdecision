@@ -276,6 +276,8 @@ def train_model(model, dataloader, optimizer, scheduler, scaler, model_params, n
                 print(f"Loss contains NaNs at epoch {epoch}")
             if torch.isnan(act_preds).any():
                 print(f"act_preds contains NaNs at epoch {epoch}")
+
+            # to do later: added nan handling for act_preds and loss
             
             # Scales loss.  Calls backward() on scaled loss to create scaled gradients.
             scaler.scale(loss).backward()

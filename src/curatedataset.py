@@ -17,6 +17,8 @@ import numpy as np
 import json
 import os
 import re
+import polars as pl
+from datasets.load import load_dataset
 
 # start_date need to be in format of 'YYYY-MM-DD'
 def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volume', 'volume_cmf', 'trend_macd', 'momentum_rsi'], init_balance = 20000, render = 'None', random = False, normalize = False):
@@ -201,8 +203,13 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     filename = os.path.join(output_path, sentiment_react_algo+'_'+stock_name+'_'+start_date+'.json')
     save_data(data, filename)
 
-def evaluate_data(data_path):
-    # read the json file from data_path
+def evaluate_dataset(data_path):
+    # read the json file of the dataset from data_path
+    # check if path exists and if it is json file
+    if not os.path.exists(data_path) and not data_path.endswith('.json'):
+        print("Invalid data path or file type")
+        return None
+    
     with open(data_path, 'r') as f:
         data = json.load(f)
     
@@ -242,3 +249,41 @@ def evaluate_data(data_path):
     date = data['date'][:state.shape[0]]
     plot_stock_trading_data(state, col, action, date)
 
+def eval_reward_datasets(directory_path):
+    reward_dataframes = []
+
+    for r,d,f in os.walk(directory_path):
+        for file in f:
+            if file.endswith('.json'):
+                # Load the dataset
+                full_path = os.path.join(r, file)
+                dataset = pl.from_arrow(load_dataset("json", data_files = full_path, field = 'data')['train'].data.table)
+                
+                # Calculate the reward statistics
+                reward_dataframe = pl.DataFrame({
+                    'reward_min': dataset['reward'].map_elements(lambda s: s.min()),
+                    'reward_max': dataset['reward'].map_elements(lambda s: s.max()),
+                    'reward_10': dataset['reward'].map_elements(lambda s: s.quantile(0.1)),
+                    'reward_25': dataset['reward'].map_elements(lambda s: s.quantile(0.25)),
+                    'reward_50': dataset['reward'].map_elements(lambda s: s.quantile(0.5)),
+                    'reward_75': dataset['reward'].map_elements(lambda s: s.quantile(0.75)),
+                    'reward_90': dataset['reward'].map_elements(lambda s: s.quantile(0.9))
+                })
+                
+                # Append the reward dataframe to the list
+                reward_dataframes.append(reward_dataframe)
+
+    combined_dataframe = pl.concat(reward_dataframes)
+
+    # calculate the mean of the reward statistics
+    mean_reward_dataframe = pl.DataFrame({
+        'reward_min': combined_dataframe['reward_min'].mean(),
+        'reward_max': combined_dataframe['reward_max'].mean(),
+        'reward_10': combined_dataframe['reward_10'].mean(),
+        'reward_25': combined_dataframe['reward_25'].mean(),
+        'reward_50': combined_dataframe['reward_50'].mean(),
+        'reward_75': combined_dataframe['reward_75'].mean(),
+        'reward_90': combined_dataframe['reward_90'].mean()
+    })
+    print(mean_reward_dataframe)
+    return mean_reward_dataframe

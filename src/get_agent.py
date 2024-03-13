@@ -79,8 +79,8 @@ class Agent:
             self.states[0,t] = torch.tensor(state).to(device)
             # calculate running rtg and add to placeholder
             self.running_rtg = self.running_rtg - (running_award/self.rtg_scale)
-            self.rtg[0,t] = self.running_rtg.to(device)
-
+            self.rtg[0,t] = self.running_rtg
+            
             if t < self.context_len:
                 # run forward pass to get action
                 _return_preds, state_preds, act_preds = self.agent.forward(self.states[:,:t+1], self.rtg[:,:t+1], self.timestep[:,:t+1], self.actions[:,:t+1])

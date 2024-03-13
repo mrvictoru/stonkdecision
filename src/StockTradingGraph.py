@@ -138,8 +138,7 @@ def plot_stock_trading_data(state: np, col: list, action_history: np, date: list
     dt_index = pd.to_datetime(date)
 
     # create a dataframe with the stock price data
-    df = pd.DataFrame({'Open':Open, 'High':High, 'Low':Low, 'Close':Close})
-    df.index = dt_index
+    df = pd.DataFrame({'Open':Open, 'High':High, 'Low':Low, 'Close':Close}, index=dt_index)
     # create an instance of the StockTradingGraph class
     stock_graph = StockTradingGraph(df, None, action_history, net_worth, windows_size)
 

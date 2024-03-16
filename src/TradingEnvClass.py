@@ -115,7 +115,7 @@ class StockTradingEnv(gym.Env):
 
         # action space (buy x%, sell x%, holdclass StockTradingEnv(gym.Env):
 
-        self.action_space = spaces.Box(low=np.array([-1, 0.01]), high=np.array([1, 0.99]), dtype=np.float32)
+        self.action_space = spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
 
         # observation space (prices and technical indicators)
         # shape should be (n_features + 6) where 6 is the number of additional dynamic features of the environment
@@ -205,15 +205,18 @@ class StockTradingEnv(gym.Env):
         # calculate reward based on the net worth/balance with a delay modifier. which bias towards having a higher balance towards the end of the episode
         # the modifier should be between 0.5 and 1, where toward the start of the episode it is closer to 0.5 and towards the end it is closer to 1
         delay_modifier = 0.5 + 0.5 * (self.current_step / self.max_step)
+        
         # reward function reward networth going up and penalize buying stock with high cost basis as well as inappropriate action
         if len(self.net_worths) < 2:
             reward_costbasis = - self.cost_basis * BETA
+            # TODO: adpot to a new action space shape
             reward_inappropriate = - action_taken[2] * GAMMA
             reward = reward_costbasis + reward_inappropriate
         else:
             reward_networth = (self.net_worth - self.net_worths[-2])  * delay_modifier * ALPHA
             #reward_balance = (self.balance - self.balance_history[-2]) * delay_modifier * ALPHA
             reward_costbasis = - self.cost_basis * BETA
+            # TODO: adpot to a new action space shape
             reward_inappropriate = - action_taken[2] * GAMMA
             reward = reward_networth + reward_costbasis + reward_inappropriate
         
@@ -234,19 +237,19 @@ class StockTradingEnv(gym.Env):
     def _take_action(self,action, execute_price):
         # Set the current price to a random price within the time step
 
-        action_type = action[0]
-        amount = action[1]
+        # TODO: adopt the new action space, it is only of shape (1,), where -1 is sell all available shares, 0 is hold, and 1 is buy all available shares, any value in between is a fraction of the available shares to buy or sell
+
         # action taken has three elements, the first element is the action type, the second element is the amount of shares bought or sold, the third element being inappropriate action
         # inappropriate action is 1 if the action is to buy but the balance is not enough, or the action is to sell but the shares held is not enough
         action_taken = [0,0,0]
 
-        # check if action_type between 2/3 and 1 then it is to buy
-        if 2/3 <= action_type <= 1:
+        # check if action is positive then it is to buy
+        if action > 0.01:
         
             # buy amount % of balance in shares
             total_possible = self.balance / execute_price
             # shares bought rounded to integer
-            shares_bought = int(total_possible * amount)
+            shares_bought = int(total_possible * action)
             # if shares bought is 0 then make it one
             if shares_bought < 1:
                 shares_bought = 1  
@@ -278,9 +281,9 @@ class StockTradingEnv(gym.Env):
                 action_taken = [1, shares_bought, 1]
 
 
-        elif -1 <= action_type <= -2/3:
+        elif action < 0.01:
             # sell amount % of shares held (rounded to interger)
-            shares_sold = int(self.shares_held * amount)
+            shares_sold = int(self.shares_held * action*-1)
             # if shares sold is 0 then make it one unless we have no shares
             if shares_sold < 1 and self.shares_held > 0:
                 shares_sold = 1

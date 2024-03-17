@@ -130,8 +130,8 @@ class TradingAlgorithm:
                     # hold the current position
                     self.bought = False
                     self.sold = False
-                    # return a random number between 0.2 and -0.2 as the confidence and action
-                    return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
+                    # return a random number between 0.01 and -0.01 as the action
+                    return np.random.uniform(-0.01, 0.01)
                 else:
                     # Buy the stock if it is oversold 
                     self.bought = True
@@ -152,8 +152,8 @@ class TradingAlgorithm:
                 # Hold the current position
                 self.bought = False
                 self.sold = False
-                # return a random number between 0.2 and -0.2 as the confidence and action
-                return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
+                # return a random number between 0.01 and -0.01 as the action
+                return np.random.uniform(-0.01, 0.01)
             
         elif self.type == 'trend_sma_fast':
             #print("trend_sma_fast check")
@@ -181,8 +181,8 @@ class TradingAlgorithm:
                         # hold the current position
                         self.bought = False
                         self.sold = False
-                        # return a random number between 0.2 and -0.2 as the confidence and action
-                        return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
+                        # return a random number between 0.01 and -0.01 as the action
+                        return np.random.uniform(-0.01, 0.01)
                     else:
                         # Buy the stock if the ratio is below the mean - std
                         self.bought = True
@@ -207,8 +207,8 @@ class TradingAlgorithm:
             #print("trend_sma check hold")
             self.bought = False
             self.sold = False
-            # return a random number between 0.2 and -0.2 as the confidence and action
-            return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
+            # return a random number between 0.01 and -0.01 as the action
+            return np.random.uniform(-0.01, 0.01)
         
         elif self.type == 'sentiment_react':
             # get the column index of the sentiment indicators (positive, negative, neutral)
@@ -218,7 +218,8 @@ class TradingAlgorithm:
             if sentiment[2] > 0.9:
                 self.bought = False
                 self.sold = False
-                return np.array([np.random.uniform(-0.2, 0.2), np.random.uniform(self.amount_range[0], self.amount_range[1])])
+                # return a random number between 0.01 and -0.01 as the action
+                return np.random.uniform(-0.01, 0.01)
             # if the positive sentiment is above 0.8, then buy the stock
             elif sentiment[0] > 0.8:
                 self.bought = True

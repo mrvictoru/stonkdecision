@@ -101,7 +101,7 @@ def has_dollar_symbol(lst:list):
     return False
   
 
-def get_newsheadline_sentiment(stock_name:str, start_date:dt.datetime, end_date:dt.datetime, device, tokenizer, model):
+def get_newsheadline_sentiment(stock_name:str, start_date:dt.datetime, end_date:dt.datetime, device, tokenizer, model, timeout = 15):
 
     # get api key
     api_key, secret_key, base_url = get_api_key()
@@ -119,13 +119,20 @@ def get_newsheadline_sentiment(stock_name:str, start_date:dt.datetime, end_date:
     
     # use requests to get news from alpaca api
 
-    response = requests.get(url, headers=headers)
-    # check if response is successful
-    if response.status_code != 200:
-        print("Error: ", response.status_code)
+    try:
+        response = requests.get(url, headers=headers, timeout=timeout)
+        # check if response is successful
+        if response.status_code != 200:
+            print("Error: ", response.status_code)
+            return None
+        else:
+            newslist = response.json()['news']
+    except requests.exceptions.Timeout:
+        print(f"Error: Request timed out after {timeout} seconds")
         return None
-    else:
-        newslist = response.json()['news']
+    except requests.exceptions.RequestException as e:
+        print("Error: ", e)
+        return None
 
     news = [lst for lst in newslist if not has_dollar_symbol(lst['symbols'])]
     

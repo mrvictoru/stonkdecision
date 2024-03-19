@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import os
 import json
 import re
+import yfinance as yf
 
 def get_nasdaq_tickers():
     url = 'https://api.nasdaq.com/api/quote/list-type/nasdaq100'
@@ -17,32 +18,21 @@ def get_nasdaq_tickers():
     return tickers
 
 def get_dow_tickers():
-  url = "https://www.cnbc.com/dow-components/"
-  # send a GET request to the url
-  response = requests.get(url)
-  # check if the response is successful
-  if response.status_code == 200:
-    # parse the HTML content using BeautifulSoup
-    soup = BeautifulSoup(response.content, "html.parser")
-    # find all the elements that contain the ticker symbols
-    elements = soup.find_all("a", class_="quote")
-    # create an empty list to store the tickers
+    url = 'https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average'
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36'
+    }
+    res = requests.get(url, headers=headers)
+    soup = BeautifulSoup(res.text, 'html.parser')
+    
+    table = soup.find('table', {'id': 'constituents'})
+    
     tickers = []
-    # loop through the elements
-    for element in elements:
-      # get the text of the element
-      text = element.get_text()
-      # use a regular expression to extract the ticker symbol
-      match = re.search(r"\((\w+)\)", text)
-      # if a match is found, append the ticker to the list
-      if match:
-        ticker = match.group(1)
+    for row in table.findAll('tr')[1:]:
+        ticker = row.findAll('td')[1].text.strip()
         tickers.append(ticker)
-    # return the list of tickers
+    
     return tickers
-  else:
-    # return an empty list if the response is not successful
-    return []
 
 def get_sp500_tickers():
     resp = requests.get('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')

@@ -80,6 +80,11 @@ import matplotlib.backends.backend_agg as agg
 #     if done:
 #         break
 
+class MeanStdObject:
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+
 class StockTradingEnv(gym.Env):
     """A stock trading environment for OpenAI gym"""
     metadata = {'render.modes': ['live', 'file', 'None']}
@@ -89,7 +94,6 @@ class StockTradingEnv(gym.Env):
     def __init__(self, df, init_balance, max_step, transaction_cost_pct=0.001,render_mode = None, random=False, normalize=False):
         super(StockTradingEnv, self).__init__()
         self.render_mode = render_mode
-        self.normalize = normalize
         # data
         # get all the features from df except for the column 'Volume'
         self.df = df.drop(columns=['Volume'])
@@ -105,11 +109,6 @@ class StockTradingEnv(gym.Env):
 
         self.net_worths = []
 
-        # normalize the data
-        self.price_mean = self.df['Close'].mean()
-        self.price_std = self.df['Close'].std()
-        self.df_standard = (self.df - self.df.mean()) / self.df.std()
-
         # trade action history
         self.action_history = []
 
@@ -120,6 +119,20 @@ class StockTradingEnv(gym.Env):
         # observation space (prices and technical indicators)
         # shape should be (n_features + 6) where 6 is the number of additional dynamic features of the environment
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(len(self.df.columns) + ADD_FEATURES_NUM,), dtype=np.float32)
+
+        # check if normalize is a list 
+        if normalize and isinstance(normalize, dict):
+            # if so check if it is with len of len(df.columns) + ADD_FEATURES_NUM
+            if len(normalize) != len(self.df.columns) + ADD_FEATURES_NUM:
+                raise ValueError("normalize dict should have the same length as the observation space")
+            # check if all elements in the list are tuples with two elements
+            if not all(isinstance(value, MeanStdObject) for key,value in normalize):
+                raise ValueError("normalize dict should have MeanStdObject")
+            self.normalize = normalize
+        else:
+            self.normalize = False
+            print("normalize is set to False, observation will not be normalized")
+
 
     # reset the state of the environment to an initial state
     def reset(self, seed = None):
@@ -170,17 +183,16 @@ class StockTradingEnv(gym.Env):
     
     def _next_observation_norm(self):
         # get the features from the data frame for current time step
-        frame = self.df_standard.iloc[self.current_step].values
+        frame = self.df.iloc[self.current_step].values
 
-        # normalize the additional data to avoid gradient issues.
-        # # append additional features
+        # append additional features
         obs = np.append(frame, [
-            self.balance/MAX_ACCOUNT_BALANCE,
-            self.net_worth/MAX_ACCOUNT_BALANCE,
-            self.shares_held/MAX_NUM_SHARES,
-            (self.cost_basis - self.price_mean)/self.price_std,
-            self.total_shares_sold/MAX_NUM_SHARES,
-            self.total_sales_value/(MAX_NUM_SHARES *MAX_SHARE_PRICE),
+            self.balance,
+            self.net_worth,
+            self.shares_held,
+            self.cost_basis,
+            self.total_shares_sold,
+            self.total_sales_value,
         ], axis=0)
 
         # update self.columns to include the additional features if it is not already included
@@ -188,6 +200,12 @@ class StockTradingEnv(gym.Env):
         if len(self.columns) != len(obs):
             self.columns.extend(['Balance', 'Net_worth', 'Shares_held', 'Cost_basis', 'Total_shares_sold', 'Total_sales_value'])
 
+        # normalize the observation using the mean and std from the normalize dict
+        for i, (col, value) in enumerate(zip(self.columns, obs)):
+            if col in self.normalize:
+                mean_std_obj = self.normalize[col]
+                obs[i] = (value - mean_std_obj.mean) / mean_std_obj.std
+        
         return obs.astype(np.float32)
 
     def step(self,action):

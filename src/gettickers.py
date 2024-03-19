@@ -44,9 +44,6 @@ def get_sp500_tickers():
         tickers.append(ticker)
     return tickers
 
-
-
-
 """
 the following function will create json files in the format below for each stock in the list of tickers
 {

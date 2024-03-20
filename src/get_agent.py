@@ -224,18 +224,18 @@ class TradingAlgorithm:
             elif sentiment[0] > 0.8:
                 self.bought = True
                 self.sold = False
-                return np.random.uniform(self.amount_range[0], self.amount_range[1])
+                return np.random.uniform(min(self.amount_range), max(self.amount_range))
             # if the negative sentiment is above 0.8, then sell the stock
             elif sentiment[1] > 0.8:
                 self.bought = False
                 self.sold = True
-                return -np.random.uniform(self.amount_range[0], self.amount_range[1])
-            # else, hold the current position
+                return -np.random.uniform(min(self.amount_range), max(self.amount_range))
+            # else, produce a random action
             else:
-                self.bought = False
-                self.sold = False
-                # return a random number between 0.01 and -0.01 as the action
-                return np.random.uniform(-0.01, 0.01)
+                action = np.random.uniform(-min(self.amount_range), min(self.amount_range))
+                self.bought = action > 0.01
+                self.sold = action < -0.01
+                return action
 
 
 # the following helper functions are used to calculate the confidence of the action based on the momentum_stoch_rsi indicator        

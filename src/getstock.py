@@ -101,7 +101,7 @@ def has_dollar_symbol(lst:list):
     return False
   
 
-def get_newsheadline_sentiment(stock_name:str, start_date:dt.datetime, end_date:dt.datetime, device, tokenizer, model, timeout = 15):
+def get_newsheadline_sentiment(stock_name:str, start_date:dt.datetime, end_date:dt.datetime, device, tokenizer, model, timeout = 25):
 
     # get api key
     api_key, secret_key, base_url = get_api_key()
@@ -131,17 +131,43 @@ def get_newsheadline_sentiment(stock_name:str, start_date:dt.datetime, end_date:
         print(f"Error: Request timed out after {timeout} seconds")
         return None
     except requests.exceptions.RequestException as e:
-        print("Error: ", e)
+        print("Request Error: ", e)
         return None
-
-    news = [lst for lst in newslist if not has_dollar_symbol(lst['symbols'])]
+    except Exception as e:
+        print("Error with getting news from response: ", e)
+        return None
     
-    news= [ev["summary"] for ev in news]
+    try:
+        news = [lst for lst in newslist if not has_dollar_symbol(lst['symbols'])]
+    except Exception as e:
+        print("Error with extracting non-crypto news: ", e)
+        return None
+    
+    try:
+        news= [ev["summary"] for ev in news]
+    except Exception as e:
+        print("Error with extracting news summary: ", e)
+        return None
+    
     tokens = tokenizer(news, padding = True, return_tensors="pt").to(device)
-    result = model(tokens["input_ids"], attention_mask=tokens["attention_mask"])["logits"]
-    result = torch.nn.functional.softmax(torch.sum(result, 0), dim = -1)
+    try:
+        result = model(tokens["input_ids"], attention_mask=tokens["attention_mask"])["logits"]
+    except Exception as e:
+        print("Error with analyzing news sentiment: ", e)
+        return None
+    
+    try:
+        result = torch.nn.functional.softmax(torch.sum(result, 0), dim = -1)
+    except Exception as e:
+        print("Error with indicating news sentiment with softmax: ", e)
+        return None
+    
     # turn the result into a list
-    result = result.tolist()
+    try:
+        result = result.tolist()
+    except Exception as e:
+        print("Error with converting result to list: ", e)
+        return None
     return result
 
 
@@ -175,10 +201,14 @@ def get_stock_data_yf_between_with_indicators_news(stock_name, start_date, end_d
     for i in range(len(data)):
         # get the news sentiment
         try:
-            result = get_newsheadline_sentiment(stock_name, data.index[i-4], data.index[i], device, tokenizer, model)
+            if i < 4:
+                result = get_newsheadline_sentiment(stock_name, data.index[0], data.index[i], device, tokenizer, model)
+            else:
+                result = get_newsheadline_sentiment(stock_name, data.index[i-4], data.index[i], device, tokenizer, model)
         except Exception as e:
-            print("Error: ", e)
+            print("Error with news sentiment function: ", e)
             result = None
+
         if result is None:
             result = [0.0,0.0,0.0]
         # update the news sentiment for that day

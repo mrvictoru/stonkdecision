@@ -118,7 +118,6 @@ def get_newsheadline_sentiment(stock_name:str, start_date:dt.datetime, end_date:
     }
     
     # use requests to get news from alpaca api
-
     try:
         response = requests.get(url, headers=headers, timeout=timeout)
         # check if response is successful
@@ -133,41 +132,22 @@ def get_newsheadline_sentiment(stock_name:str, start_date:dt.datetime, end_date:
     except requests.exceptions.RequestException as e:
         print("Request Error: ", e)
         return None
-    except Exception as e:
-        print("Error with getting news from response: ", e)
+
+    # check for newlist is empty
+    if len(newslist) == 0:
+        print("No news from api response")
         return None
     
-    try:
-        news = [lst for lst in newslist if not has_dollar_symbol(lst['symbols'])]
-    except Exception as e:
-        print("Error with extracting non-crypto news: ", e)
-        return None
-    
-    try:
-        news= [ev["summary"] for ev in news]
-    except Exception as e:
-        print("Error with extracting news summary: ", e)
-        return None
-    
+    news = [lst for lst in newslist if not has_dollar_symbol(lst['symbols'])]
+    news= [ev["summary"] for ev in news]
+
     tokens = tokenizer(news, padding = True, return_tensors="pt").to(device)
-    try:
-        result = model(tokens["input_ids"], attention_mask=tokens["attention_mask"])["logits"]
-    except Exception as e:
-        print("Error with analyzing news sentiment: ", e)
-        return None
-    
-    try:
-        result = torch.nn.functional.softmax(torch.sum(result, 0), dim = -1)
-    except Exception as e:
-        print("Error with indicating news sentiment with softmax: ", e)
-        return None
-    
+    result = model(tokens["input_ids"], attention_mask=tokens["attention_mask"])["logits"]
+    result = torch.nn.functional.softmax(torch.sum(result, 0), dim = -1)
+
     # turn the result into a list
-    try:
-        result = result.tolist()
-    except Exception as e:
-        print("Error with converting result to list: ", e)
-        return None
+    result = result.tolist()
+    
     return result
 
 

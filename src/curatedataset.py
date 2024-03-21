@@ -7,7 +7,7 @@ from getstock import get_stock_data_yf_between_with_indicators_news
 # import datatime library
 from datetime import datetime, timedelta
 
-from TradingEnvClass import StockTradingEnv
+from TradingEnvClass import StockTradingEnv, MeanStdObject
 
 from get_agent import Agent, TradingAlgorithm
 
@@ -287,3 +287,23 @@ def eval_reward_datasets(directory_path):
     })
     print(mean_reward_dataframe)
     return mean_reward_dataframe
+
+# helper function that can calculate the mean and std for each state column in the combined dataset in the directory path
+def calc_meanstd_datasets(directory_path):
+    net_worth_dataframes = []
+    env_state = None
+    for r,d,f in os.walk(directory_path):
+        for file in f:
+            if file.endswith('.json'):
+                # Load the dataset
+                full_path = os.path.join(r, file)
+                if env_state is None:
+                    env_state = pl.from_arrow(load_dataset("json", data_files = full_path, field = 'env_state')['train'].data.table)
+                else:
+                    # compare the env_state with the current dataset
+                    current_env_state = pl.from_arrow(load_dataset("json", data_files = full_path, field = 'env_state')['train'].data.table)
+
+
+                dataset = pl.from_arrow(load_dataset("json", data_files = full_path, field = 'data')['train'].data.table)
+                
+                # Calculate the mean and std of each state column and store them as MeanStdObject

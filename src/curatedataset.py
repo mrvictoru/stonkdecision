@@ -58,11 +58,15 @@ def run_env(agent, stock_name, env, num_episodes, date, normalize = False, deter
     data = {'data':[], 'stock': stock_name, 'num_episodes':num_episodes, 'normalize':normalize, 'env_state': env.columns, 'date':date}
     agent.reset()
     # loop through episodes
+    
     for i in range (num_episodes):
+        print("Episode: ", i)
         # dictionary to store state, ation, reward, timestep
         dict = {'state':[], 'action':[], 'reward':[], 'timestep':[]}
         # reset the environment
+        print("checkpoint 1")
         state = env.reset()[0]
+        print("checkpoint 2")
         dict['state'].append(state.tolist())
         timestep = 0
         reward = 0
@@ -141,14 +145,20 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     path = os.path.join(os.getcwd(),agents_folder)
     # get agent type without .zip
     stable_agents_type = [re.sub('.zip', '', agent) for agent in os.listdir(path) if agent.endswith('.zip')]
-
+    #rint(type(stable_agents_type))
+    #print(stable_agents_type)
     for agent_type in stable_agents_type:
         # make agent
         agent_path = os.path.join(path, agent_type+'.zip')
         agent = Agent(env, agent_type, agent_path)
         # run agent in env and collect data
         print("Running agent: ", agent_type)
-        data = run_env(agent, stock_name, env, num_episodes=num_episodes, date=env_date, normalize=True, deterministic=False)
+        try:
+            data = run_env(agent, stock_name, env, num_episodes=num_episodes, date=env_date, normalize=True, deterministic=False)
+        except Exception as e:
+            print("Error in running agent: ", agent_type)
+            print(e)
+            continue
         # save data
         print("Saving data to ", output_path)
         filename = os.path.join(output_path, agent_type+'_'+stock_name+'_'+start_date+'.json')
@@ -157,7 +167,11 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     # run random agent in env and collect data
     print("Running random agent")
     agent = Agent(env, 'random')
-    data = run_env(agent, stock_name, env, num_episodes, env_date)
+    try:
+        data = run_env(agent, stock_name, env, num_episodes, env_date)
+    except Exception as e:
+        print("Error in running random agent")
+        print(e)
     # save data
     print("Saving data to ", output_path)
     filename = os.path.join(output_path, 'random_'+stock_name+'_'+start_date+'.json')
@@ -171,7 +185,11 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     print("momentum_stoch_rsi_col: ", momentum_stoch_rsi_col)
     momentum_trade_algo = TradingAlgorithm(algo_type = momentum_algo, indicator_column = momentum_stoch_rsi_col, amount_range = trade_range)
     momentum_algo_agent = Agent(env, 'algo', algo = momentum_trade_algo)
-    data = run_env(momentum_algo_agent, stock_name, env, num_episodes, env_date, normalize = False)
+    try:
+        data = run_env(momentum_algo_agent, stock_name, env, num_episodes, env_date, normalize = False)
+    except Exception as e:
+        print("Error in running momentum algo agent")
+        print(e)
     # save data
     print("Saving data to ", output_path)
     filename = os.path.join(output_path, momentum_algo+'_'+stock_name+'_'+start_date+'.json')
@@ -184,7 +202,11 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     print("trend_sma_fast_col: ", trend_sma_fast_col)
     trend_sma_fast_trade_algo = TradingAlgorithm(algo_type = trend_sma_fast_algo, indicator_column = trend_sma_fast_col, amount_range = trade_range)
     trend_sma_fast_algo_agent = Agent(env, 'algo', algo = trend_sma_fast_trade_algo)
-    data = run_env(trend_sma_fast_algo_agent, stock_name, env, num_episodes, env_date, normalize = False)
+    try:
+        data = run_env(trend_sma_fast_algo_agent, stock_name, env, num_episodes, env_date, normalize = False)
+    except Exception as e:
+        print("Error in running trend sma fast algo agent")
+        print(e)
     # save data
     print("Saving data to ", output_path)
     filename = os.path.join(output_path, trend_sma_fast_algo+'_'+stock_name+'_'+start_date+'.json')
@@ -197,7 +219,12 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     sentiment_neu_col = col.index('neutral')
     sentiment_react_trade_algo = TradingAlgorithm(algo_type = sentiment_react_algo, indicator_column = [sentiment_posi_col, sentiment_neg_col, sentiment_neu_col], amount_range = trade_range)
     sentiment_react_algo_agent = Agent(env, 'algo', algo = sentiment_react_trade_algo)
-    data = run_env(sentiment_react_algo_agent, stock_name, env, num_episodes, env_date, normalize = False)
+    try:
+        data = run_env(sentiment_react_algo_agent, stock_name, env, num_episodes, env_date, normalize = False)
+    except Exception as e:
+        print("Error in running sentiment react algo agent")
+        print(e)
+
     # save data
     print("Saving data to ", output_path)
     filename = os.path.join(output_path, sentiment_react_algo+'_'+stock_name+'_'+start_date+'.json')

@@ -64,16 +64,18 @@ def run_env(agent, stock_name, env, num_episodes, date, normalize = False, deter
         # dictionary to store state, ation, reward, timestep
         dict = {'state':[], 'action':[], 'reward':[], 'timestep':[]}
         # reset the environment
-        print("checkpoint 1")
+        
         state = env.reset()[0]
-        print("checkpoint 2")
         dict['state'].append(state.tolist())
+
         timestep = 0
         reward = 0
         done = False
+        
         # use normalized state if normalize is True
         if normalize:
             state = env.norm_obs()
+
         # loop to sample action, next_state, reward, from the env
         while not done:
             # sample action
@@ -86,6 +88,7 @@ def run_env(agent, stock_name, env, num_episodes, date, normalize = False, deter
                 print(e)
                 print('time step:', timestep)
                 break
+            
             dict['action'].append(action.tolist())
             dict['reward'].append(reward)
             dict['timestep'].append(timestep)
@@ -154,7 +157,7 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
         # run agent in env and collect data
         print("Running agent: ", agent_type)
         try:
-            data = run_env(agent, stock_name, env, num_episodes=num_episodes, date=env_date, normalize=True, deterministic=False)
+            data = run_env(agent, stock_name, env, num_episodes=num_episodes, date=env_date, normalize=False, deterministic=False)
         except Exception as e:
             print("Error in running agent: ", agent_type)
             print(e)

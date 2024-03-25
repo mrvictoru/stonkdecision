@@ -319,8 +319,8 @@ def eval_reward_datasets(directory_path):
     return mean_reward_dataframe
 
 # helper function that can calculate the mean and std for each state column in the combined dataset in the directory path
-def calc_meanstd_datasets(directory_path):
-    net_worth_dataframes = []
+def calc_meanstd_datasets(directory_path, exclude = []):
+    buff_dataframes = []
     env_state = None
     for r,d,f in os.walk(directory_path):
         for file in f:
@@ -332,8 +332,19 @@ def calc_meanstd_datasets(directory_path):
                 else:
                     # compare the env_state with the current dataset
                     current_env_state = pl.from_arrow(load_dataset("json", data_files = full_path, field = 'env_state')['train'].data.table)
-
-
-                dataset = pl.from_arrow(load_dataset("json", data_files = full_path, field = 'data')['train'].data.table)
+                    if not env_state.frame_equal(current_env_state):
+                        raise ValueError("env_state columns are not the same")
                 
-                # Calculate the mean and std of each state column and store them as MeanStdObject
+                    buff_dataframes.append(pl.from_arrow(load_dataset("json", data_files = full_path, field = 'data')['train'].data.table))
+
+    
+    combined_dataframe = pl.concat(buff_dataframes)
+    mean_std = {}
+    # calculate the mean and std for each state column
+    for env_state_col in env_state.columns:
+        # set the column name as the key and the mean and std as the value using MeanStdObject
+        if env_state_col not in exclude:
+            mean_std[env_state_col] = MeanStdObject(combined_dataframe[env_state_col].mean(), combined_dataframe[env_state_col].std())
+        else:
+            mean_std[env_state_col] = MeanStdObject()
+    return mean_std

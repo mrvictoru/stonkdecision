@@ -80,8 +80,13 @@ import matplotlib.backends.backend_agg as agg
 #     if done:
 #         break
 
+# make an object to store the mean and std of the observation
 class MeanStdObject:
-    def __init__(self, mean, std):
+    # mean and std are either None or a float
+    def __init__(self, mean=None, std=None):
+        # check if mean and std are either None or a float
+        if mean is not None and not isinstance(mean, (int, float)):
+            raise ValueError("mean should be either None or a float")
         self.mean = mean
         self.std = std
 

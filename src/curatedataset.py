@@ -320,7 +320,8 @@ def eval_reward_datasets(directory_path):
 
 # helper function that can calculate the mean and std for each state column in the combined dataset in the directory path
 def calc_meanstd_datasets(directory_path, exclude = []):
-    buff_dataframes = []
+    buff_mean = []
+    buff_std = []
     env_state = None
     for r,d,f in os.walk(directory_path):
         for file in f:
@@ -328,23 +329,36 @@ def calc_meanstd_datasets(directory_path, exclude = []):
                 # Load the dataset
                 full_path = os.path.join(r, file)
                 if env_state is None:
-                    env_state = pl.from_arrow(load_dataset("json", data_files = full_path, field = 'env_state')['train'].data.table)
+                    with open(full_path, 'r') as f:
+                        data = json.load(f)
+                    
+                    env_state = data['env_state']
                 else:
                     # compare the env_state with the current dataset
-                    current_env_state = pl.from_arrow(load_dataset("json", data_files = full_path, field = 'env_state')['train'].data.table)
-                    if not env_state.frame_equal(current_env_state):
-                        raise ValueError("env_state columns are not the same")
-                
-                    buff_dataframes.append(pl.from_arrow(load_dataset("json", data_files = full_path, field = 'data')['train'].data.table))
-
+                    with open(full_path, 'r') as f:
+                        data = json.load(f)
+                    current_env_state = data['env_state']
+                    # check if two list are the same
+                    if env_state != current_env_state:
+                        print("env_state is not the same")
+                        return None
+                    
+                    # get state data into stack format
+                    plbuffset = pl.from_arrow(load_dataset("json", data_files = full_path, field = 'data')['train'].data.table)
+                    state = plbuffset['state'].map_elements(lambda s: np.stack(np.array(s)))
+                    state_np = np.concatenate(state.to_numpy())
+                    buff_mean.append(np.mean(state_np, axis=0))
+                    buff_std.append(np.std(state_np, axis=0))
     
-    combined_dataframe = pl.concat(buff_dataframes)
+    overall_mean = np.mean(buff_mean)
+    overall_std = np.sqrt(np.mean(np.array(buff_std)**2))
     mean_std = {}
     # calculate the mean and std for each state column
-    for env_state_col in env_state.columns:
+    for env_state_col in env_state:
+        index = env_state.index(env_state_col)
         # set the column name as the key and the mean and std as the value using MeanStdObject
         if env_state_col not in exclude:
-            mean_std[env_state_col] = MeanStdObject(combined_dataframe[env_state_col].mean(), combined_dataframe[env_state_col].std())
+            mean_std[env_state_col] = MeanStdObject(mean = overall_mean[index], std = overall_std[index])
         else:
             mean_std[env_state_col] = MeanStdObject()
     return mean_std

@@ -70,20 +70,17 @@ class CustomTrajDataset(Dataset):
             'action': pldataset['action'].map_elements(lambda x: np.stack(np.array(x))),
             'reward': compute_rtg(pldataset, gamma, rtg_scale),
             'timestep': pldataset['timestep'],
-        })
-
-        # calculate mean and std of states
-        state = self.data['state'].apply(lambda x: np.stack(np.array(x)))
-        self.state_mean = np.mean(np.stack(state.apply(lambda x: np.mean(x, axis=0)).to_numpy()), axis=0)
-        self.state_std = np.mean(np.stack(state.apply(lambda x: np.std(x, axis=0)).to_numpy()), axis=0)
+        })    
 
         # get the length of the dataset
-        self.stateshape = len(state)
+        self.stateshape = self.pldataset.shape[0]
         print("Dataset length: ", self.stateshape)
 
 
     def get_state_stats(self):
-        return self.state_mean, self.state_std        
+        # calculate mean and std of states
+        state_np = np.concatenate(self.data['state'].to_numpy())
+        return np.mean(state_np), np.std(state_np)        
 
     def __len__(self):
         return self.stateshape

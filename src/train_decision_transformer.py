@@ -74,17 +74,17 @@ class CustomTrajDataset(Dataset):
             'reward': compute_rtg(pldataset, gamma, rtg_scale),
             'timestep': pldataset['timestep'],
         })
-        self.normalize_mean = np.array([])
-        self.normalize_std = np.array([])
+
         if force_normalize and isinstance(force_normalize, dict):
             if len(force_normalize) != len(self.env_state):
                 raise ValueError("force_normalize should have the same length as the number of env_state")
             if not all(isinstance(value, MeanstdObject) for key, value in force_normalize.items()):
                 raise ValueError("force_normalize should contain MeanstdObject instances")
-            for col in self.env_state:
-                self.normalize_mean = np.append(self.normalize_mean, force_normalize[col].mean)
-                self.normalize_std = np.append(self.normalize_std, force_normalize[col].std)
 
+            normalize_mean = torch.tensor([force_normalize[col].mean for col in self.env_state])
+            normalize_std = torch.tensor([force_normalize[col].std for col in self.env_state])
+
+            self.normalize = (normalize_mean, normalize_std)
             print("Forcing normalization")
         else:
             self.normalize = False
@@ -160,8 +160,12 @@ class CustomTrajDataset(Dataset):
 
         """
         # check if normalization is needed
-        
-        return state.float(), action.float(), rtg.unsqueeze(-1).float(), timesteps.int(), mask.int()
+        if not self.normalize:
+            return state.float(), action.float(), rtg.unsqueeze(-1).float(), timesteps.int(), mask.int()
+        else:
+            # normalize the state
+            state = (state - self.normalize[0].to(self.device))/self.normalize[1].to(self.device)
+            return state.float(), action.float(), rtg.unsqueeze(-1).float(), timesteps.int(), mask.int()
 
 # create a combine dataset object from json files under a directory
 def get_combinedataset(path, context_len = 60, gamma = 0.8, rtg_scale = 100, device = "cpu"):

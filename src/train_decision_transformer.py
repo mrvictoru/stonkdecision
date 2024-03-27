@@ -16,6 +16,7 @@ from datasets.load import load_dataset
 from torch.utils.data import Dataset, DataLoader
 
 from cust_transf import DecisionTransformer
+from TradingEnvClass import MeanstdObject
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -55,11 +56,13 @@ def compute_rtg_torch(reward, gamma, rtg_scale):
 
 # define a custom dataset class which loads the data, modifies the reward to be the discounted cumulative sum and apply trajectory masking
 class CustomTrajDataset(Dataset):
-    def __init__(self, file_name, context_len, gamma, rtg_scale, device):
+    def __init__(self, file_name, context_len, gamma, rtg_scale, force_normalize, device):
         self.gamma = gamma
         self.context_len = context_len
         self.device = device
         dataset = load_dataset("json", data_files = file_name, field = 'data')['train']
+        with open(file_name, 'r') as f:
+            self.env_state = json.load(f)['env_state']
 
         print("Processing data as polars dataframe.")
         pldataset = pl.from_arrow(dataset.data.table)
@@ -70,7 +73,22 @@ class CustomTrajDataset(Dataset):
             'action': pldataset['action'].map_elements(lambda x: np.stack(np.array(x))),
             'reward': compute_rtg(pldataset, gamma, rtg_scale),
             'timestep': pldataset['timestep'],
-        })    
+        })
+        self.normalize_mean = np.array([])
+        self.normalize_std = np.array([])
+        if force_normalize and isinstance(force_normalize, dict):
+            if len(force_normalize) != len(self.env_state):
+                raise ValueError("force_normalize should have the same length as the number of env_state")
+            if not all(isinstance(value, MeanstdObject) for key, value in force_normalize.items()):
+                raise ValueError("force_normalize should contain MeanstdObject instances")
+            for col in self.env_state:
+                self.normalize_mean = np.append(self.normalize_mean, force_normalize[col].mean)
+                self.normalize_std = np.append(self.normalize_std, force_normalize[col].std)
+
+            print("Forcing normalization")
+        else:
+            self.normalize = False
+            print("Not forcing normalization")
 
         # get the length of the dataset
         self.stateshape = self.pldataset.shape[0]
@@ -99,7 +117,6 @@ class CustomTrajDataset(Dataset):
         except IndexError:
             # handle index out of range error
             raise IndexError(f"Index {idx} out of range for dataset with length {self.stateshape}")
-
 
         data_len = state.shape[0]
         
@@ -132,6 +149,7 @@ class CustomTrajDataset(Dataset):
             # trajectory mask
             mask = torch.cat([torch.ones(data_len, dtype=torch.long), torch.zeros(padding_len, dtype=torch.long)], dim=0)
 
+        
         """
         Exepected output type
         state type:  torch.float32
@@ -141,6 +159,8 @@ class CustomTrajDataset(Dataset):
         traj_mask type:  torch.int64
 
         """
+        # check if normalization is needed
+        
         return state.float(), action.float(), rtg.unsqueeze(-1).float(), timesteps.int(), mask.int()
 
 # create a combine dataset object from json files under a directory

@@ -209,8 +209,7 @@ class StockTradingEnv(gym.Env):
         for i, (col, value) in enumerate(zip(self.columns, obs)):
             if col in self.normalize:
                 mean_std_obj = self.normalize[col]
-                if mean_std_obj.mean is not None and mean_std_obj.std is not None:
-                    obs[i] = (value - mean_std_obj.mean) / mean_std_obj.std
+                obs[i] = (value - mean_std_obj.mean) / mean_std_obj.std
         
         return obs.astype(np.float32)
 

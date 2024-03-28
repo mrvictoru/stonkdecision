@@ -360,5 +360,5 @@ def calc_meanstd_datasets(directory_path, exclude = []):
         if env_state_col not in exclude:
             mean_std[env_state_col] = MeanStdObject(mean = overall_mean[index], std = overall_std[index])
         else:
-            mean_std[env_state_col] = MeanStdObject()
+            mean_std[env_state_col] = MeanStdObject(0,1)
     return mean_std

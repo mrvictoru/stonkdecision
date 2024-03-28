@@ -16,7 +16,7 @@ from datasets.load import load_dataset
 from torch.utils.data import Dataset, DataLoader
 
 from cust_transf import DecisionTransformer
-from TradingEnvClass import MeanstdObject
+from TradingEnvClass import MeanStdObject
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -78,8 +78,8 @@ class CustomTrajDataset(Dataset):
         if force_normalize and isinstance(force_normalize, dict):
             if len(force_normalize) != len(self.env_state):
                 raise ValueError("force_normalize should have the same length as the number of env_state")
-            if not all(isinstance(value, MeanstdObject) for key, value in force_normalize.items()):
-                raise ValueError("force_normalize should contain MeanstdObject instances")
+            if not all(isinstance(value, MeanStdObject) for key, value in force_normalize.items()):
+                raise ValueError("force_normalize should contain MeanStdObject instances")
 
             normalize_mean = torch.tensor([force_normalize[col].mean for col in self.env_state])
             normalize_std = torch.tensor([force_normalize[col].std for col in self.env_state])

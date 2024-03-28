@@ -349,13 +349,19 @@ def calc_meanstd_datasets(directory_path, exclude = []):
                     state_np = np.concatenate(state.to_numpy())
                     buff_mean.append(np.mean(state_np, axis=0))
                     buff_std.append(np.std(state_np, axis=0))
-    
-    overall_mean = np.mean(buff_mean)
-    overall_std = np.sqrt(np.mean(np.array(buff_std)**2))
+    print(np.array(buff_mean).shape)
+    print(np.array(buff_std).shape)
+    overall_mean = np.mean(np.array(buff_mean), axis=0)
+    overall_std = np.sqrt(np.mean(np.array(buff_std)**2,axis=0))
+
+    print(overall_mean.shape)
+    print(overall_std.shape)
     mean_std = {}
     # calculate the mean and std for each state column
     for env_state_col in env_state:
         index = env_state.index(env_state_col)
+        print("index: ", index)
+        print("env_state_col: ", env_state_col)
         # set the column name as the key and the mean and std as the value using MeanStdObject
         if env_state_col not in exclude:
             mean_std[env_state_col] = MeanStdObject(mean = overall_mean[index], std = overall_std[index])

@@ -91,7 +91,7 @@ class CustomTrajDataset(Dataset):
             print("Not forcing normalization")
 
         # get the length of the dataset
-        self.stateshape = self.pldataset.shape[0]
+        self.stateshape = pldataset.shape[0]
         print("Dataset length: ", self.stateshape)
 
 

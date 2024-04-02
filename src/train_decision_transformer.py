@@ -164,7 +164,7 @@ class CustomTrajDataset(Dataset):
             return state.float(), action.float(), rtg.unsqueeze(-1).float(), timesteps.int(), mask.int()
         else:
             # normalize the state
-            state = (state - self.normalize[0].to(self.device))/self.normalize[1].to(self.device)
+            state = (state - self.normalize[0])/self.normalize[1]
             return state.float(), action.float(), rtg.unsqueeze(-1).float(), timesteps.int(), mask.int()
 
 # create a combine dataset object from json files under a directory
@@ -368,4 +368,4 @@ def save_model(model, params, model_name, directory = 'trained_models'):
 
     # write model parameters to a json file
     with open(os.path.join(directory, model_name+'_params.json'), 'w') as f:
-        json.dump(params, f)
+        json.dump(params, f, default=lambda o: o.to_dict() if isinstance(o, MeanStdObject) else o)

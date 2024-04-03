@@ -53,29 +53,28 @@ def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volum
     return env, env.observation_space.shape[0], env.action_space.shape[0], env.columns, stock_data
 
 # second group of functions are to get agent, run it in the environment, collect trading data and save as json dataset
-def run_env(agent, stock_name, env, num_episodes, date, normalize = False, deterministic=False):
+def run_env(agent, stock_name, env, num_episodes, date, normalize_param, deterministic=False):
     # data dictionary to store data
-    data = {'data':[], 'stock': stock_name, 'num_episodes':num_episodes, 'normalize':normalize, 'env_state': env.columns, 'date':date}
+
+    data = {'data':[], 'stock': stock_name, 'num_episodes':num_episodes, 'normalize':normalize_param, 'env_state': env.columns, 'date':date}
     agent.reset()
     # loop through episodes
     
     for i in range (num_episodes):
-        print("Episode: ", i)
+        #print("Episode: ", i)
         # dictionary to store state, ation, reward, timestep
-        dict = {'state':[], 'action':[], 'reward':[], 'timestep':[]}
+        dict = {'state':[], 'action':[], 'reward':[], 'timestep':[], 'action_history':[]}
         # reset the environment
         
         state = env.reset()[0]
-        dict['state'].append(state.tolist())
+        observation = env._next_observation()
+
+        dict['state'].append(observation.tolist())
 
         timestep = 0
         reward = 0
         done = False
         
-        # use normalized state if normalize is True
-        if normalize:
-            state = env.norm_obs()
-
         # loop to sample action, next_state, reward, from the env
         while not done:
             # sample action
@@ -98,14 +97,16 @@ def run_env(agent, stock_name, env, num_episodes, date, normalize = False, deter
                 #print('Terminated: ', terminated, '; Truncated: ', truncated)
                 #print('env current step ', env.current_step, ' env max step ', env.max_step)
                 done = True
+                # store action history
+                dict['action_history'] = env.action_history
                 print('Episode: ', i, 'Timestep:', timestep,  ' done')
             else:
-                dict['state'].append(next_state.tolist())
+                observation = env._next_observation()
+                dict['state'].append(observation.tolist())
 
             # update timestep and the state (use normalized state if normalize is True)
             timestep += 1
-            if normalize:
-                next_state = env.norm_obs()
+
             state = next_state
 
         # store the data for the episode
@@ -257,8 +258,8 @@ def evaluate_dataset(data_path):
     mean_sum_reward = np.mean(rewards)
     std_sum_reward = np.std(rewards)
     
-    print("Mean simple sum reward: ", mean_sum_reward)
-    print("Std simple sum reward: ", std_sum_reward)
+    print("Mean sample sum reward: ", mean_sum_reward)
+    print("Std sample sum reward: ", std_sum_reward)
 
     # calculate the mean and std of networth growth for the 10 random episodes
     end_networth = []
@@ -275,7 +276,7 @@ def evaluate_dataset(data_path):
     episode = random_episodes[2]
     print("Plotting episode: ", episode)
     state = np.array(data['data'][episode]['state'])
-    action = np.array(data['data'][episode]['action'])
+    action = np.array(data['data'][episode]['action_history'])
     date = data['date'][:state.shape[0]]
     plot_stock_trading_data(state, col, action, date)
 

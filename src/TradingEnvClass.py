@@ -89,9 +89,10 @@ class MeanStdObject:
             raise ValueError("mean should be either None or a float")
         self.mean = mean
         self.std = std
-        
+
     def to_dict(self):
         return {'mean': self.mean, 'std': self.std}
+
 
 class StockTradingEnv(gym.Env):
     """A stock trading environment for OpenAI gym"""

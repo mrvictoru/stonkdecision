@@ -17,6 +17,7 @@ import numpy as np
 import json
 import os
 import re
+import pandas as pd
 import polars as pl
 from datasets.load import load_dataset
 
@@ -277,7 +278,17 @@ def evaluate_dataset(data_path):
     print("Plotting episode: ", episode)
     state = np.array(data['data'][episode]['state'])
     action = np.array(data['data'][episode]['action_history'])
-    date = data['date'][:state.shape[0]]
+
+    """
+    the following date method is temporary fix as non-trading date shouldnt be include but it is not recorded at the moment
+    """
+    start_date = data['date']
+    # work out the end date by adding the number of days to the start date
+    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
+    end_date_obj = start_date_obj + timedelta(days=len(state)-1)
+    end_date = end_date_obj.strftime('%Y-%m-%d')
+    # create a list of dates from start_date to end_date
+    date = [d.strftime('%Y-%m-%d') for d in pd.date_range(start_date, end_date)]
     plot_stock_trading_data(state, col, action, date)
 
 def eval_reward_datasets(directory_path):

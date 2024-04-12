@@ -150,11 +150,11 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     path = os.path.join(os.getcwd(),agents_folder)
     # get agent type without .zip
     stable_agents_type = [re.sub('.zip', '', agent) for agent in os.listdir(path) if agent.endswith('.zip')]
-    #rint(type(stable_agents_type))
-    #print(stable_agents_type)
+
     for agent_type in stable_agents_type:
         # make agent
         agent_path = os.path.join(path, agent_type+'.zip')
+        agent_type = "stable-baselines-" + agent_type.split('_')[0]
         agent = Agent(env, agent_type, agent_path)
         # run agent in env and collect data
         print("Running agent: ", agent_type)

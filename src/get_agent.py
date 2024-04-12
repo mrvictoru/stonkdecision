@@ -14,7 +14,7 @@ class Agent:
         self.action_space = env.action_space
         self.agent = None
         if agent_type.startswith('stable-baselines'):
-            model_type = agent_type.split('-')[1]
+            model_type = agent_type.split('-')[2]
             if model_type == 'ppo':
                 self.agent = PPO.load(model_path, env=env)
             elif model_type == 'a2c':

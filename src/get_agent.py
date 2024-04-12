@@ -13,15 +13,20 @@ class Agent:
         self.observation_space = env.observation_space
         self.action_space = env.action_space
         self.agent = None
+        print("Agent type: ", agent_type)
         if agent_type.startswith('stable-baselines'):
             model_type = agent_type.split('-')[2]
             if model_type == 'ppo':
+                print("Loading PPO model")
                 self.agent = PPO.load(model_path, env=env)
             elif model_type == 'a2c':
+                print("Loading A2C model")
                 self.agent = A2C.load(model_path, env=env)
             elif model_type == 'ddpg':
+                print("Loading DDPG model")
                 self.agent = DDPG.load(model_path, env=env)
         elif agent_type == 'transformer':
+            print("Loading DecisionTransformer model")
             # load model parameters from the model_path json file
             with open(model_path, 'r') as f:
                 params = json.load(f)
@@ -54,8 +59,10 @@ class Agent:
             self.running_rtg = rtg_target/rtg_scale
 
         elif agent_type == 'algo':
+            print("Agent is a TradingAlgorithm")
             self.agent = algo
         elif agent_type == 'random':
+            print("Agent is random")
             self.agent = None
 
     def reset(self):

@@ -149,17 +149,17 @@ def full_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_ran
     # get trained stable agents' path insider agents_folder_path
     path = os.path.join(os.getcwd(),agents_folder)
     # get agent type without .zip
-    stable_agents_type = [re.sub('.zip', '', agent) for agent in os.listdir(path) if agent.endswith('.zip')]
+    stable_agents_types = [re.sub('.zip', '', agent) for agent in os.listdir(path) if agent.endswith('.zip')]
 
-    for agent_type in stable_agents_type:
+    for agent_type in stable_agents_types:
         # make agent
         agent_path = os.path.join(path, agent_type+'.zip')
-        agent_type = "stable-baselines-" + agent_type.split('_')[0]
-        agent = Agent(env, agent_type, agent_path)
+        agent_type = "stable-baselines-"+agent_type.split("_")[0]
+        agent = Agent(env, agent_type, model_path=agent_path)
         # run agent in env and collect data
         print("Running agent: ", agent_type)
         try:
-            data = run_env(agent, stock_name, env, num_episodes=num_episodes, date=env_date, normalize=False, deterministic=False)
+            data = run_env(agent, stock_name, env, num_episodes=num_episodes, date=env_date, normalize_param=False, deterministic=False)
         except Exception as e:
             print("Error in running agent: ", agent_type)
             print(e)

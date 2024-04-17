@@ -57,8 +57,12 @@ the following function will create json files in the format below for each stock
 }
 """
 
-def create_json_files(tickers, start_date, num_days, interval, indicators, init_balance, output_path, json_path):
+def create_json_files(tickers, start_date, num_days, interval, indicators, init_balance, output_path, json_path, normalize_params = False):
     for ticker in tickers:
+        if normalize_params is not False:
+            normalize_param = normalize_params[ticker]
+        else:
+            normalize_param = False
         # change output path to ticker name with output path
         new_output_path = os.path.join(output_path, ticker)
         json_file = {
@@ -68,7 +72,8 @@ def create_json_files(tickers, start_date, num_days, interval, indicators, init_
             "interval": interval,
             "indicators": indicators,
             "init_balance": init_balance,
-            "output_path": new_output_path
+            "output_path": new_output_path,
+            "normalize_param": normalize_param
         }
         # Check if the directory exists
         if not os.path.exists(json_path):

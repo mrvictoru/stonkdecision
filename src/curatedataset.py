@@ -54,7 +54,7 @@ def makegymenv(stock_name, start_date, period, interval='1d', indicators=['Volum
     return env, env.observation_space.shape[0], env.action_space.shape[0], env.columns, stock_data
 
 # second group of functions are to get agent, run it in the environment, collect trading data and save as json dataset
-def run_env(agent, stock_name, env, num_episodes, date, normalize_param, deterministic=False):
+def run_env(agent, stock_name, env, num_episodes, date, normalize_param=False, deterministic=False):
     # data dictionary to store data
 
     data = {'data':[], 'stock': stock_name, 'num_episodes':num_episodes, 'normalize':normalize_param, 'env_state': env.columns, 'date':date}

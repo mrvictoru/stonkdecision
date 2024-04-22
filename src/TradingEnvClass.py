@@ -133,6 +133,8 @@ class StockTradingEnv(gym.Env):
         if normalize and isinstance(normalize, dict):
             # if so check if it is with len of len(df.columns) + ADD_FEATURES_NUM
             if len(normalize) != len(self.df.columns) + ADD_FEATURES_NUM:
+                print("normalize dict len: ", len(normalize))
+                print("observation space len: ", len(self.df.columns) + ADD_FEATURES_NUM)
                 raise ValueError("normalize dict should have the same length as the observation space")
             # check if all elements in the list are tuples with two elements
             if not all(isinstance(value, MeanStdObject) for key,value in normalize.items()):

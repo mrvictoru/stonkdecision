@@ -16,7 +16,7 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_checker import check_env
 
 # import custom functions and classes
-from curatedataset import makegymenv
+from curatedataset import makegymenv, calc_meanstd_datasets
 from TradingEnvClass import StockTradingEnv
 
 import argparse
@@ -76,10 +76,18 @@ def full_run(json_file_path):
     if not os.path.exists(output_path):
         print("Creating output folder: ", output_path)
         os.makedirs(output_path)
+    else:
+        files = os.listdir(output_path)
+        # check if any of the files end with .json
+        if any(".json" in file for file in files):
+            dataset_mean_std = calc_meanstd_datasets(output_path,['positive', 'negative', 'neutral'])
+        else:
+            dataset_mean_std = False
+    
     
     # create the trading environment
     print(f"Creating trading environment with {stock_name} data")
-    stable_env, obs_space, act_space, col, data = makegymenv(stock_name=stock_name, start_date=start_date, period=num_days, interval=interval, indicators=indicators, normalize=False, init_balance=init_balance)
+    stable_env, obs_space, act_space, col, data = makegymenv(stock_name=stock_name, start_date=start_date, period=num_days, interval=interval, indicators=indicators, normalize=dataset_mean_std, init_balance=init_balance)
 
     print("Checking environment")
     try:

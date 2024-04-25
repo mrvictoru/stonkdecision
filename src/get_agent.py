@@ -182,7 +182,7 @@ class TradingAlgorithm:
                 # debug print
                 #print("trend_sma check mean: ", mean, "std: ", std)
                 # Determine the current position based on the mean and std of ratio
-                if ratio < mean - std and not self.bought:
+                if ratio < (mean - std) and not self.bought:
                     # check if we can afford to buy by checking if close price is below the balance,
                     if state[3] > state[-6]:
                         # hold the current position
@@ -250,21 +250,21 @@ def oversold_confidence(momentum_stoch_rsi, lower_bound, higher_bound):
     # map momentum_stoch_rsi [0 : 0.2] to [higher_bound : lower_bound]
     confidence = (momentum_stoch_rsi - 0) * (lower_bound - higher_bound) / (0.2 - 0) + higher_bound
     # add a random value between -0.05 and 0.05 to the confidence
-    confidence += np.random.uniform(-0.05, 0.05)
+    confidence += np.random.uniform(-0.01, 0.01)
     # if the confidence is above 1, set it to 1
     if confidence > 1:
         confidence = 1
     return confidence
 
 def overbought_confidence(momentum_stoch_rsi, lower_bound, higher_bound):
-    # map momentum_stoch_rsi [0.8 : 1] to [-lower_bound : -higher_bound]
-    confidence = (momentum_stoch_rsi - 0.8) * (-lower_bound - (-higher_bound)) / (1 - 0.8) - (-higher_bound)
+    # map momentum_stoch_rsi [0.8 : 1] to [lower_bound : higher_bound]
+    confidence = (momentum_stoch_rsi - 0.8) * (higher_bound - lower_bound) / (1 - 0.8) + lower_bound
     # add a random value between -0.05 and 0.05 to the confidence
-    confidence += np.random.uniform(-0.05, 0.05)
+    confidence += np.random.uniform(-0.01, 0.01)
     # if the confidence is below -1, set it to -1
     if confidence < -1:
         confidence = -1
-    return confidence
+    return -confidence
 
 def buy_trend_sma_fast_confidence(ratio, mean, std, lower_bound, higher_bound):
     # map ratio below the mean - 2*std to higher_bound
@@ -272,24 +272,24 @@ def buy_trend_sma_fast_confidence(ratio, mean, std, lower_bound, higher_bound):
         confidence = higher_bound
     # map ratio between mean - 2*std and mean - std to [higher_bound:lower_bound]
     elif ratio <= mean - std:
-        confidence = (ratio - (mean - std))*(higher_bound-lower_bound) / ((mean - 2*std) - (mean - std)) + lower_bound
+        confidence = (ratio - (mean - std))*(higher_bound - lower_bound) / ((mean - 2*std) - (mean - std)) + lower_bound
     # map ratio above the mean to lower_bound
     else:
         confidence = lower_bound
     # add a random value between -0.05 and 0.05 to the confidence
-    confidence += np.random.uniform(-0.05, 0.05)
+    confidence += np.random.uniform(-0.01, 0.01)
     return confidence
 
 def sell_trend_sma_fast_confidence(ratio, mean, std, lower_bound, higher_bound):
     # map ratio below the mean + 2*std to -higher_bound
     if ratio >= mean + 2*std:
-        confidence = -higher_bound
-    # map ratio between mean + 2*std and mean + std to [-higher_bound:-lower_bound]
+        confidence = higher_bound
+    # map ratio between mean + 2*std and mean + std to [higher_bound:lower_bound]
     elif ratio >= mean + std:
-        confidence = (ratio - (mean + std)) * (-higher_bound + lower_bound) / ((mean + 2*std) - (mean + std)) - lower_bound
+        confidence = (ratio - (mean + std))*(higher_bound - lower_bound) / ((mean + 2*std) - (mean + std)) + lower_bound
     # map ratio above the mean to -lower_bound
     else:
-        confidence = -lower_bound
+        confidence = lower_bound
     # add a random value between -0.05 and 0.05 to the confidence
-    confidence += np.random.uniform(-0.05, 0.05)
-    return confidence
+    confidence += np.random.uniform(-0.01, 0.01)
+    return -confidence

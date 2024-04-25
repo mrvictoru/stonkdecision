@@ -120,7 +120,7 @@ def save_data(data, file_name):
     with open(file_name, 'w') as outfile:
         json.dump(data, outfile)
 
-def stable_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_range = [0.05, 0.3]):
+def stable_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_range = [0.05, 0.3], random = False):
     print("num_episodes: ", num_episodes)
     # read the JSON file
     with open(json_file_path, 'r') as f:
@@ -143,7 +143,7 @@ def stable_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_r
 
     # create the trading environment
     print("Creating environment")
-    env, obs_space_dim, act_space_dim, col, data = makegymenv(stock_name, start_date, num_days, interval, indicators=indicators, normalize=normalize, init_balance=init_balance)
+    env, obs_space_dim, act_space_dim, col, data = makegymenv(stock_name, start_date, num_days, interval, indicators=indicators, random = random, normalize=normalize, init_balance=init_balance)
     env_date = data.index.strftime('%Y-%m-%d').tolist()
 
     print("Getting stable agents")
@@ -170,7 +170,7 @@ def stable_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_r
         filename = os.path.join(output_path, agent_type+'_'+stock_name+'_'+start_date+'.json')
         save_data(data, filename)
 
-def non_stable_curate_run(json_file_path, num_episodes = 200, trade_range = [0.05, 0.3]):
+def non_stable_curate_run(json_file_path, num_episodes = 200, trade_range = [0.05, 0.3], random = False):
     print("num_episodes: ", num_episodes)
     # read the JSON file
     with open(json_file_path, 'r') as f:
@@ -192,7 +192,7 @@ def non_stable_curate_run(json_file_path, num_episodes = 200, trade_range = [0.0
 
     # create the trading environment
     print("Creating environment")
-    env, obs_space_dim, act_space_dim, col, data = makegymenv(stock_name, start_date, num_days, interval, indicators=indicators, normalize=False, init_balance=init_balance)
+    env, obs_space_dim, act_space_dim, col, data = makegymenv(stock_name, start_date, num_days, interval, indicators=indicators, random = random, normalize=False, init_balance=init_balance)
     env_date = data.index.strftime('%Y-%m-%d').tolist()
 
     # run random agent in env and collect data

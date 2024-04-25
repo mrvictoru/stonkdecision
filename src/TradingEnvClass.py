@@ -162,7 +162,7 @@ class StockTradingEnv(gym.Env):
             # set the current step to a random point within the data frame
             if seed is not None:
                 np.random.seed(seed)
-            self.current_step = np.random.randint(0, len(self.df.loc[:, 'Open'].values) - 6)
+            self.current_step = np.random.randint(0, len(self.df.loc[:, 'Open'].values) - 30)
         else:
             self.current_step = 0
         

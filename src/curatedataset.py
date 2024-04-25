@@ -217,7 +217,7 @@ def non_stable_curate_run(json_file_path, num_episodes = 200, trade_range = [0.0
     momentum_trade_algo = TradingAlgorithm(algo_type = momentum_algo, indicator_column = momentum_stoch_rsi_col, amount_range = trade_range)
     momentum_algo_agent = Agent(env, 'algo', algo = momentum_trade_algo)
     try:
-        data = run_env(momentum_algo_agent, stock_name, env, num_episodes, env_date, normalize = False)
+        data = run_env(momentum_algo_agent, stock_name, env, num_episodes, env_date)
     except Exception as e:
         print("Error in running momentum algo agent")
         print(e)
@@ -234,7 +234,7 @@ def non_stable_curate_run(json_file_path, num_episodes = 200, trade_range = [0.0
     trend_sma_fast_trade_algo = TradingAlgorithm(algo_type = trend_sma_fast_algo, indicator_column = trend_sma_fast_col, amount_range = trade_range)
     trend_sma_fast_algo_agent = Agent(env, 'algo', algo = trend_sma_fast_trade_algo)
     try:
-        data = run_env(trend_sma_fast_algo_agent, stock_name, env, num_episodes, env_date, normalize = False)
+        data = run_env(trend_sma_fast_algo_agent, stock_name, env, num_episodes, env_date)
     except Exception as e:
         print("Error in running trend sma fast algo agent")
         print(e)
@@ -251,7 +251,7 @@ def non_stable_curate_run(json_file_path, num_episodes = 200, trade_range = [0.0
     sentiment_react_trade_algo = TradingAlgorithm(algo_type = sentiment_react_algo, indicator_column = [sentiment_posi_col, sentiment_neg_col, sentiment_neu_col], amount_range = trade_range)
     sentiment_react_algo_agent = Agent(env, 'algo', algo = sentiment_react_trade_algo)
     try:
-        data = run_env(sentiment_react_algo_agent, stock_name, env, num_episodes, env_date, normalize = False)
+        data = run_env(sentiment_react_algo_agent, stock_name, env, num_episodes, env_date)
     except Exception as e:
         print("Error in running sentiment react algo agent")
         print(e)

@@ -89,6 +89,11 @@ def run_env(agent, stock_name, env, num_episodes, date, normalize_param=False, d
                 print('time step:', timestep)
                 break
             
+            # check the data type of action, if it is not a float, convert it to list
+            if not isinstance(action, float):
+                action = action.tolist()
+            else:
+                action = [action]
             dict['action'].append(action)
             dict['reward'].append(reward)
             dict['timestep'].append(timestep)

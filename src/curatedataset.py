@@ -89,7 +89,7 @@ def run_env(agent, stock_name, env, num_episodes, date, normalize_param=False, d
                 print('time step:', timestep)
                 break
             
-            dict['action'].append(action.tolist())
+            dict['action'].append(action)
             dict['reward'].append(reward)
             dict['timestep'].append(timestep)
 

@@ -123,7 +123,8 @@ def run_env(agent, stock_name, env, num_episodes, date, normalize_param=False, d
 def save_data(data, file_name):
 
     with open(file_name, 'w') as outfile:
-        json.dump(data, outfile)
+        # handle the MeanStdObject by converting it to dictionary
+        json.dump(data, outfile, default=lambda o: o.to_dict() if isinstance(o, MeanStdObject) else o)
 
 def stable_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_range = [0.05, 0.3], random = False):
     print("num_episodes: ", num_episodes)
@@ -145,6 +146,11 @@ def stable_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_r
     if not os.path.exists(output_path):
         print("Creating output folder: ", output_path)
         os.makedirs(output_path)
+    
+    # if normalize is False, see if there are curated datasets in the output_path
+    if normalize is False and len(os.listdir(output_path)) == 4:
+        # if so use curated datasets to calculate mean and std using helper function
+        normalize = calc_meanstd_datasets(output_path,['positive','negative','neutral'])
 
     # create the trading environment
     print("Creating environment")
@@ -165,7 +171,7 @@ def stable_curate_run(json_file_path, agents_folder, num_episodes = 200, trade_r
         # run agent in env and collect data
         print("Running agent: ", agent_type)
         try:
-            data = run_env(agent, stock_name, env, num_episodes=num_episodes, date=env_date, normalize_param=False, deterministic=False)
+            data = run_env(agent, stock_name, env, num_episodes=num_episodes, date=env_date, normalize_param=normalize, deterministic=False)
         except Exception as e:
             print("Error in running agent: ", agent_type)
             print(e)

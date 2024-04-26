@@ -8,10 +8,11 @@ import torch
 
 # create a class for the agent, which is used to store either the stable-baselines agent, random sampling action space agent, or else
 class Agent:
-    def __init__(self, env, agent_type, rtg_target=100, rtg_scale=0.75, model_path = None, algo = None, device = 'cpu', max_test_ep_len = 1000):
+    def __init__(self, env, agent_type, rtg_target=100, rtg_scale=0.75, model_path = None, algo = None, device = 'cpu', max_test_ep_len = 1000, safeguard = True):
         self.env = env
         self.observation_space = env.observation_space
         self.action_space = env.action_space
+        self.safe_guard = safeguard
         self.agent = None
         print("Agent type: ", agent_type)
         if agent_type.startswith('stable-baselines'):
@@ -76,8 +77,11 @@ class Agent:
     
     def predict(self, state, t, running_award=0, deterministic=False):
         # if the agent is None, then return a random action
+        action = None
+        state_pred = None
         if self.agent is None:
-            return self.action_space.sample(), 0
+            action = self.action_space.sample()
+            state_pred = 0
         
         elif isinstance(self.agent, DecisionTransformer):
             self.agent.eval()
@@ -98,17 +102,29 @@ class Agent:
                 action_pred = act_preds[0,-1].detach()
             # return the action as cpu numpy array
             self.actions[0,t] = action_pred
-            return action_pred.cpu().numpy(), state_preds
+            action = action_pred.cpu().numpy(), 
+            state_pred = state_preds
         
         # if the agent is a TradingAlgorith, then return the action from the algorithm
         elif isinstance(self.agent, TradingAlgorithm):
-            return self.agent.trade(state), 0
+            action = self.agent.trade(state)
+            state_pred = 0
         
         # else, return the action from the stable-baselines agent
         else:
-            return self.agent.predict(state, deterministic=deterministic)
-
-
+            action = self.agent.predict(state, deterministic=deterministic)
+            state_pred = 0
+        
+        # check if safe guard is enabled and are we buying
+        if self.safe_guard is True and action > 0:
+            # check if we can afford to buy by checking if close price is above the balance
+            if state[3] > state[-6]:
+                # if we cant afford to buy so change action to hold
+                action = np.random.uniform(-0.01, 0.01)
+        
+        return action, state_pred
+            
+        
 class TradingAlgorithm:
     def __init__(self, algo_type = 'momentum_stoch_rsi', indicator_column = -1, amount_range = [0.05, 0.35],window_size = 20):
         self.indicator_column = indicator_column

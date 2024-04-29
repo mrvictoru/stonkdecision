@@ -8,6 +8,7 @@ import torch
 
 # create a class for the agent, which is used to store either the stable-baselines agent, random sampling action space agent, or else
 class Agent:
+    # by default agent has safeguard set to true, it prevent agent from buying if the budget is not enough to buy any more shares
     def __init__(self, env, agent_type, rtg_target=100, rtg_scale=0.75, model_path = None, algo = None, device = 'cpu', max_test_ep_len = 1000, safeguard = True):
         self.env = env
         self.observation_space = env.observation_space
@@ -112,8 +113,7 @@ class Agent:
         
         # else, return the action from the stable-baselines agent
         else:
-            action = self.agent.predict(state, deterministic=deterministic)
-            state_pred = 0
+            action, state_pred = self.agent.predict(state, deterministic=deterministic)
         
         # check if safe guard is enabled and are we buying
         if self.safe_guard is True and action > 0:

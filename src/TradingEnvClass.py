@@ -273,7 +273,7 @@ class StockTradingEnv(gym.Env):
         action_taken = [0,0,0]
 
         # check if action is positive then it is to buy
-        if action > 0.01:
+        if action > 0.005:
         
             # buy amount % of balance in shares
             total_possible = self.balance / execute_price
@@ -287,13 +287,6 @@ class StockTradingEnv(gym.Env):
             additional_cost = shares_bought * execute_price
             transaction_cost = additional_cost * self.transaction_cost_pct
             
-            # remove safeguard to allow buying with negative balance
-            """
-            if self.balance < additional_cost:
-                shares_bought = 0
-                additional_cost = 0
-            """
-
             self.balance -= additional_cost + transaction_cost
             # calculate the new cost basis, check if it is divide by zero, if it is then set it to the execute price
             if self.shares_held + shares_bought == 0:
@@ -310,7 +303,7 @@ class StockTradingEnv(gym.Env):
                 action_taken = [1, shares_bought, 1]
 
 
-        elif action < 0.01:
+        elif action < -0.005:
             # sell amount % of shares held (rounded to interger)
             shares_sold = int(self.shares_held * action*-1)
             # if shares sold is 0 then make it one unless we have no shares

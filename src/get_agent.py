@@ -120,13 +120,13 @@ class Agent:
             # check if we can afford to buy by checking if close price is above the balance
             if state[3] > state[-6]:
                 # if we cant afford to buy so change action to hold
-                action = np.random.uniform(-0.01, 0.01)
+                action = np.random.uniform(-0.001, 0.001)
         
         return action, state_pred
             
         
 class TradingAlgorithm:
-    def __init__(self, algo_type = 'momentum_stoch_rsi', indicator_column = -1, amount_range = [0.05, 0.35],window_size = 20):
+    def __init__(self, algo_type = 'momentum_stoch_rsi', indicator_column = -1, amount_range = [0.01, 0.35],window_size = 20):
         self.indicator_column = indicator_column
         self.bought = False
         self.sold = False
@@ -153,8 +153,8 @@ class TradingAlgorithm:
                     # hold the current position
                     self.bought = False
                     self.sold = False
-                    # return a random number between 0.01 and -0.01 as the action
-                    return np.random.uniform(-0.01, 0.01)
+                    # return a random number between 0.001 and -0.001 as the action
+                    return np.random.uniform(-0.001, 0.001)
                 else:
                     # Buy the stock if it is oversold 
                     self.bought = True
@@ -175,8 +175,8 @@ class TradingAlgorithm:
                 # Hold the current position
                 self.bought = False
                 self.sold = False
-                # return a random number between 0.01 and -0.01 as the action
-                return np.random.uniform(-0.01, 0.01)
+                # return a random number between 0.001 and -0.001 as the action
+                return np.random.uniform(-0.001, 0.001)
             
         elif self.type == 'trend_sma_fast':
             #print("trend_sma_fast check")
@@ -204,8 +204,8 @@ class TradingAlgorithm:
                         # hold the current position
                         self.bought = False
                         self.sold = False
-                        # return a random number between 0.01 and -0.01 as the action
-                        return np.random.uniform(-0.01, 0.01)
+                        # return a random number between 0.001 and -0.001 as the action
+                        return np.random.uniform(-0.001, 0.001)
                     else:
                         # Buy the stock if the ratio is below the mean - std
                         self.bought = True
@@ -230,8 +230,8 @@ class TradingAlgorithm:
             #print("trend_sma check hold")
             self.bought = False
             self.sold = False
-            # return a random number between 0.01 and -0.01 as the action
-            return np.random.uniform(-0.01, 0.01)
+            # return a random number between 0.001 and -0.001 as the action
+            return np.random.uniform(-0.001, 0.001)
         
         elif self.type == 'sentiment_react':
             # get the column index of the sentiment indicators (positive, negative, neutral)
@@ -241,8 +241,8 @@ class TradingAlgorithm:
             if sentiment[2] > 0.9:
                 self.bought = False
                 self.sold = False
-                # return a random number between 0.01 and -0.01 as the action
-                return np.random.uniform(-0.01, 0.01)
+                # return a random number between 0.001 and -0.001 as the action
+                return np.random.uniform(-0.001, 0.001)
             # if the positive sentiment is above 0.8, then buy the stock
             elif sentiment[0] > 0.8:
                 self.bought = True
@@ -256,8 +256,8 @@ class TradingAlgorithm:
             # else, produce a random action
             else:
                 action = np.random.uniform(-min(self.amount_range), min(self.amount_range))
-                self.bought = action > 0.01
-                self.sold = action < -0.01
+                self.bought = action > 0.005
+                self.sold = action < -0.005
                 return action
 
 
@@ -266,7 +266,7 @@ def oversold_confidence(momentum_stoch_rsi, lower_bound, higher_bound):
     # map momentum_stoch_rsi [0 : 0.2] to [higher_bound : lower_bound]
     confidence = (momentum_stoch_rsi - 0) * (lower_bound - higher_bound) / (0.2 - 0) + higher_bound
     # add a random value between -0.05 and 0.05 to the confidence
-    confidence += np.random.uniform(-0.01, 0.01)
+    confidence += np.random.uniform(-0.001, 0.001)
     # if the confidence is above 1, set it to 1
     if confidence > 1:
         confidence = 1
@@ -275,8 +275,8 @@ def oversold_confidence(momentum_stoch_rsi, lower_bound, higher_bound):
 def overbought_confidence(momentum_stoch_rsi, lower_bound, higher_bound):
     # map momentum_stoch_rsi [0.8 : 1] to [lower_bound : higher_bound]
     confidence = (momentum_stoch_rsi - 0.8) * (higher_bound - lower_bound) / (1 - 0.8) + lower_bound
-    # add a random value between -0.05 and 0.05 to the confidence
-    confidence += np.random.uniform(-0.01, 0.01)
+    # add a random value between -0.001 and 0.001 to the confidence
+    confidence += np.random.uniform(-0.001, 0.001)
     # if the confidence is below -1, set it to -1
     if confidence < -1:
         confidence = -1
@@ -292,8 +292,8 @@ def buy_trend_sma_fast_confidence(ratio, mean, std, lower_bound, higher_bound):
     # map ratio above the mean to lower_bound
     else:
         confidence = lower_bound
-    # add a random value between -0.05 and 0.05 to the confidence
-    confidence += np.random.uniform(-0.01, 0.01)
+    # add a random value between -0.001 and 0.001 to the confidence
+    confidence += np.random.uniform(-0.001, 0.001)
     return confidence
 
 def sell_trend_sma_fast_confidence(ratio, mean, std, lower_bound, higher_bound):
@@ -306,6 +306,6 @@ def sell_trend_sma_fast_confidence(ratio, mean, std, lower_bound, higher_bound):
     # map ratio above the mean to -lower_bound
     else:
         confidence = lower_bound
-    # add a random value between -0.05 and 0.05 to the confidence
-    confidence += np.random.uniform(-0.01, 0.01)
+    # add a random value between -0.001 and 0.001 to the confidence
+    confidence += np.random.uniform(-0.001, 0.001)
     return -confidence

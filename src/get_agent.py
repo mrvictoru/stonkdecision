@@ -114,7 +114,9 @@ class Agent:
         # else, return the action from the stable-baselines agent
         else:
             action, state_pred = self.agent.predict(state, deterministic=deterministic)
-        
+        # check if action is of type tuple
+        if isinstance(action, tuple):
+            action = action[0]
         # check if safe guard is enabled and are we buying
         if self.safe_guard is True and action > 0:
             # check if we can afford to buy by checking if close price is above the balance

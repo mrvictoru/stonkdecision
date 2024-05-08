@@ -159,7 +159,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 src/trained_stable_agents/
-src/trained_stable_agents_2/
+src/test_compare/
+src/trade_png
 src/stock_trade_data/
 src/trained_TSLA_decision_transformer/
 src/trained_nasdaq_dow_decision_transformer/

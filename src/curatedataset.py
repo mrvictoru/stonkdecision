@@ -326,7 +326,13 @@ def evaluate_dataset(data_path):
     end_date = end_date_obj.strftime('%Y-%m-%d')
     # create a list of dates from start_date to end_date
     date = [d.strftime('%Y-%m-%d') for d in pd.date_range(start_date, end_date)]
-    plot_stock_trading_data(state, col, action, date)
+    fig = plot_stock_trading_data(state, col, action, date)
+    # get the file name from the data_path
+    match = re.search(r'_(.+)_test.json', os.path.basename(data_path))
+    if match:
+        file_name = match.group(1)
+    fig.savefig(file_name+'.png', dpi=600)
+    
 
 def eval_reward_datasets(directory_path):
     reward_dataframes = []

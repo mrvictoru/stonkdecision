@@ -11,7 +11,7 @@ matplotlib.animation will be used to animate the chart.
 To use this class, create an instance of the class, pass the dataframe with the stock price data,
 When animating, call the animate function with current_step, list of net_worth, list of trades action so far and windows_size
 """
-MARKER_SIZE = 80
+MARKER_SIZE = 40
 
 import mplfinance as mpf
 import numpy as np
@@ -81,7 +81,7 @@ class StockTradingGraph:
 
         aplist = []
         # add subplot for networth
-        aplist.append(mpf.make_addplot(networth, type='line', ylabel='Net Worth ($)', panel=2, title='Net Worth'))
+        aplist.append(mpf.make_addplot(networth, type='line', ylabel='Net Worth ($)', panel=2))
         aplist.append(amountap)
         # check if both buy_marker and sell_marker are not null
         if not(buy_marker.isnull().values.all()) and not(sell_marker.isnull().values.all()):

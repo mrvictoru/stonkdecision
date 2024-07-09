@@ -104,22 +104,21 @@ class CustomTrajDataset(Dataset):
         return self.stateshape
 
     def __getitem__(self, idx):
-
-        # check if the data is homogeneous
-    
+        # use try except to get the desired episode, raise if there is an error
         try:
             # get the specific row from the dataset 
             state = self.data['state'][idx]
             action = self.data['action'][idx]
             rtg = self.data['reward'][idx]
             timesteps = self.data['timestep'][idx]
-
         except IndexError:
             # handle index out of range error
             raise IndexError(f"Index {idx} out of range for dataset with length {self.stateshape}")
-
+            
+        # get number of interaction (aka number of steps done in env) in this episode
         data_len = state.shape[0]
         
+        # if there is more step done than required context len, sample a random windows within this episode
         if data_len > self.context_len:
             # sample random start index
             start_idx = np.random.randint(0, data_len - self.context_len)
@@ -131,6 +130,7 @@ class CustomTrajDataset(Dataset):
             timesteps = torch.arange(start=start_idx, end=start_idx + self.context_len, step=1)
             # trajectory mask
             mask = torch.ones(self.context_len, dtype=torch.long)
+        # otherwise pad data at the end with zeros so it can be process as desire shape tensor
         else:
             padding_len = self.context_len - data_len
 
@@ -143,9 +143,7 @@ class CustomTrajDataset(Dataset):
             state = torch.cat((state, torch.zeros((padding_len, *state.shape[1:]))), dim = 0)
             action = torch.cat((action, torch.zeros((padding_len, *action.shape[1:]))), dim = 0)
             rtg = torch.cat((rtg, torch.zeros((padding_len, *rtg.shape[1:]))), dim = 0)
-
             timesteps = torch.arange(start=0, end=self.context_len, step=1)
-
             # trajectory mask
             mask = torch.cat([torch.ones(data_len, dtype=torch.long), torch.zeros(padding_len, dtype=torch.long)], dim=0)
 
@@ -157,7 +155,6 @@ class CustomTrajDataset(Dataset):
         rtg type:  torch.float32
         timestep type:  torch.int64
         traj_mask type:  torch.int64
-
         """
         # check if normalization is needed
         if not self.normalize:

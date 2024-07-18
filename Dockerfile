@@ -22,8 +22,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN chmod +x /usr/bin/tini
 
-COPY ./src ./src
-
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
 CMD ["jupyter", "notebook", "--port=8888", "--no-browser", "--ip=0.0.0.0", "--allow-root"]
